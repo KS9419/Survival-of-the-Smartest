@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Survival of the Smartest</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a1a0a);min-height:100vh;font-family:'Segoe UI',sans-serif;color:white;display:flex;flex-direction:column;align-items:center;padding:16px;padding-bottom:40px}
+h1{font-size:1.7rem;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,#ff6b35,#f7c59f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2px;margin-top:10px;text-align:center}
+.subtitle{font-size:0.8rem;opacity:0.5;margin-bottom:20px;letter-spacing:2px;text-align:center;text-transform:uppercase}
+.screen{width:100%;max-width:480px;display:none;flex-direction:column;gap:12px}
+.screen.active{display:flex}
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:20px}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:white;font-size:1rem;outline:none;margin-bottom:10px}
+input::placeholder{color:rgba(255,255,255,0.3)}
+.btn{width:100%;padding:15px;border:none;border-radius:50px;font-size:1rem;font-weight:800;cursor:pointer;letter-spacing:1px;transition:transform 0.1s;margin-bottom:8px}
+.btn:active{transform:scale(0.97)}
+.btn:last-child{margin-bottom:0}
+.btn-primary{background:linear-gradient(135deg,#ff6b35,#f7c59f);color:#1a0a0a}
+.btn-secondary{background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.15)}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,107,53,0.95);color:white;padding:12px 24px;border-radius:50px;font-weight:700;z-index:999;display:none;white-space:nowrap;font-size:0.9rem}
+
+/* ── Difficulty Cards ── */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diff-card{padding:16px;border-radius:16px;border:2px solid transparent;cursor:pointer;text-align:center;transition:transform 0.15s,box-shadow 0.15s}
+.diff-card:active{transform:scale(0.96)}
+.diff-easy{background:linear-gradient(135deg,#1a3a1a,#2a5a2a);border-color:#4caf50}
+.diff-medium{background:linear-gradient(135deg,#1a2a3a,#1a3a5a);border-color:#2196f3}
+.diff-hard{background:linear-gradient(135deg,#3a1a1a,#5a2a1a);border-color:#ff9800}
+.diff-insane{background:linear-gradient(135deg,#3a0a0a,#5a0a0a);border-color:#f44336}
+.diff-name{font-size:1.1rem;font-weight:900;letter-spacing:1px}
+.diff-easy .diff-name{color:#4caf50}
+.diff-medium .diff-name{color:#2196f3}
+.diff-hard .diff-name{color:#ff9800}
+.diff-insane .diff-name{color:#f44336;animation:flicker 1.5s infinite}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:0.7}}
+.diff-info{font-size:0.72rem;opacity:0.7;margin-top:4px;line-height:1.5}
+.diff-coins{font-size:0.85rem;font-weight:700;margin-top:6px}
+.diff-easy .diff-coins{color:#4caf50}
+.diff-medium .diff-coins{color:#2196f3}
+.diff-hard .diff-coins{color:#ff9800}
+.diff-insane .diff-coins{color:#f44336}
+
+/* ── Game Screen ── */
+.game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cat-badge{background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.4);border-radius:50px;padding:5px 14px;font-size:0.8rem;font-weight:700;color:#ff6b35}
+.word-progress{font-size:0.8rem;opacity:0.6}
+.coin-display{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:700;color:#f7c59f}
+
+/* Hangman SVG */
+.hangman-wrap{display:flex;justify-content:center;margin:8px 0}
+.hangman-svg{width:160px;height:160px}
+
+/* Lives bar */
+.lives-wrap{margin:8px 0}
+.lives-label{font-size:0.75rem;opacity:0.6;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.lives-dots{display:flex;gap:6px;flex-wrap:wrap}
+.life-dot{width:20px;height:20px;border-radius:50%;background:#e74c3c;transition:all 0.3s;box-shadow:0 0 8px rgba(231,76,60,0.5)}
+.life-dot.lost{background:rgba(255,255,255,0.1);box-shadow:none}
+.life-dot.safe{background:#2ecc71;box-shadow:0 0 8px rgba(46,204,113,0.5)}
+
+/* Word display */
+.word-display{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px 0}
+.letter-box{width:34px;height:42px;border-bottom:3px solid rgba(255,255,255,0.4);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:1.4rem;font-weight:900;transition:all 0.3s;text-transform:uppercase}
+.letter-box.revealed{border-color:#ff6b35;color:#f7c59f}
+.letter-box.space{border:none;width:16px}
+
+/* Hint */
+.hint-box{background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.25);border-radius:12px;padding:10px 14px;font-size:0.85rem;color:#f7c59f;margin-bottom:8px;line-height:1.5}
+.hint-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;opacity:0.6;margin-bottom:4px}
+
+/* Keyboard */
+.keyboard{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0}
+.key-btn{width:42px;height:42px;border-radius:10px;border:none;background:rgba(255,255,255,0.1);color:white;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.15s;border:1px solid rgba(255,255,255,0.15)}
+.key-btn:active{transform:scale(0.9)}
+.key-btn.correct{background:rgba(46,204,113,0.3);border-color:#2ecc71;color:#2ecc71}
+.key-btn.wrong{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.3);color:rgba(255,255,255,0.25);cursor:default}
+.key-btn:disabled{cursor:default}
+
+/* Power-ups */
+.powerup-bar{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.pu-btn{flex:1;padding:10px 8px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;transition:all 0.15s}
+.pu-btn:active{transform:scale(0.95)}
+.pu-btn.pu-reveal{border-color:rgba(33,150,243,0.5);color:#2196f3}
+.pu-btn.pu-life{border-color:rgba(46,204,113,0.5);color:#2ecc71}
+.pu-btn.pu-skip{border-color:rgba(255,152,0,0.5);color:#ff9800}
+.pu-btn:disabled{opacity:0.3;cursor:default}
+
+/* Insta death overlay */
+.instadeath-overlay{display:none;position:fixed;inset:0;background:rgba(139,0,0,0.92);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.instadeath-overlay.show{display:flex}
+.instadeath-box{text-align:center;padding:32px}
+.instadeath-skull{font-size:5rem;animation:shake 0.5s infinite}
+@keyframes shake{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.instadeath-title{font-size:2rem;font-weight:900;color:#ff6b35;margin:8px 0}
+.instadeath-sub{opacity:0.7;font-size:1rem}
+
+/* Round result overlay */
+.result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:150;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.result-overlay.show{display:flex}
+.result-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px;width:100%;max-width:360px;text-align:center}
+.result-icon{font-size:3.5rem;margin-bottom:8px}
+.result-word{font-size:1.1rem;margin-bottom:4px;opacity:0.7}
+.result-word span{color:#f7c59f;font-weight:700;font-size:1.3rem}
+.result-coins{font-size:1rem;margin:10px 0;color:#f7c59f}
+
+/* Game Over / Win screen */
+.endgame-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:160;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.endgame-overlay.show{display:flex}
+.endgame-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px;width:100%;max-width:380px;text-align:center;display:flex;flex-direction:column;gap:10px}
+.endgame-icon{font-size:4rem}
+.endgame-title{font-size:1.8rem;font-weight:900}
+.endgame-title.win{color:#f7c59f}
+.endgame-title.lose{color:#e74c3c}
+.endgame-stats{font-size:0.9rem;opacity:0.7;line-height:1.8}
+.endgame-coins{font-size:1.2rem;font-weight:800;color:#f7c59f}
+
+/* Leaderboard */
+.lb-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.lb-tab{flex:1;padding:8px;border-radius:50px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;text-align:center;min-width:60px}
+.lb-tab.active{background:linear-gradient(135deg,#ff6b35,#f7c59f);color:#1a0a0a;border-color:transparent}
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{text-align:left;padding:6px 8px;opacity:0.5;font-size:0.72rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.08)}
+.lb-table td{padding:10px 8px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.85rem}
+.lb-table tr:first-child td{color:#ffd700}
+.lb-table tr:nth-child(2) td{color:#c0c0c0}
+.lb-table tr:nth-child(3) td{color:#cd7f32}
+.rank-medal{font-size:1rem}
+.diff-tag{padding:2px 8px;border-radius:50px;font-size:0.7rem;font-weight:700}
+.diff-tag.Easy{background:rgba(76,175,80,0.2);color:#4caf50}
+.diff-tag.Medium{background:rgba(33,150,243,0.2);color:#2196f3}
+.diff-tag.Hard{background:rgba(255,152,0,0.2);color:#ff9800}
+.diff-tag.INSANE{background:rgba(244,67,54,0.2);color:#f44336}
+
+/* Nickname input screen */
+.nick-wrap{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+
+<h1>☠️ Survival of the Smartest</h1>
+<p class="subtitle">Guess or Die</p>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="card nick-wrap">
+    <div style="font-size:0.75rem;opacity:0.5;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Your Name</div>
+    <input id="player-nick" placeholder="Enter nickname..." maxlength="16"/>
+    <button class="btn btn-primary" onclick="goSelectDifficulty()">⚔️ Play</button>
+  </div>
+  <div class="card">
+    <div style="font-size:0.75rem;opacity:0.5;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">🏆 Leaderboard</div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" onclick="switchLbTab('all',this)">Overall</button>
+      <button class="lb-tab" onclick="switchLbTab('Easy',this)">Easy</button>
+      <button class="lb-tab" onclick="switchLbTab('Medium',this)">Medium</button>
+      <button class="lb-tab" onclick="switchLbTab('Hard',this)">Hard</button>
+      <button class="lb-tab" onclick="switchLbTab('INSANE',this)">INSANE</button>
+    </div>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Player</th><th>🪙</th><th>Diff</th><th>Date</th></tr></thead>
+      <tbody id="lb-body">
+        <tr><td colspan="5" style="text-align:center;opacity:0.4;padding:16px">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DIFFICULTY SELECT -->
+<div class="screen" id="screen-difficulty">
+  <div class="card">
+    <div style="font-size:0.75rem;opacity:0.5;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Choose Your Fate</div>
+    <div class="diff-grid">
+      <div class="diff-card diff-easy" onclick="startGame('Easy')">
+        <div class="diff-name">EASY</div>
+        <div class="diff-info">12 wrong tries<br/>No insta-death</div>
+        <div class="diff-coins">🪙 1 coin/win</div>
+      </div>
+      <div class="diff-card diff-medium" onclick="startGame('Medium')">
+        <div class="diff-name">MEDIUM</div>
+        <div class="diff-info">9 wrong tries<br/>No insta-death</div>
+        <div class="diff-coins">🪙 2 coins/win</div>
+      </div>
+      <div class="diff-card diff-hard" onclick="startGame('Hard')">
+        <div class="diff-name">HARD</div>
+        <div class="diff-info">6 wrong tries<br/>⚡ Insta-death risk</div>
+        <div class="diff-coins">🪙 4 coins/win</div>
+      </div>
+      <div class="diff-card diff-insane" onclick="startGame('INSANE')">
+        <div class="diff-name">INSANE</div>
+        <div class="diff-info">2 wrong tries<br/>⚡ Insta-death risk</div>
+        <div class="diff-coins">🪙 6 coins/win</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="font-size:0.8rem;opacity:0.6;text-align:center;line-height:1.7">
+    Each game has 4 random categories.<br/>
+    Power-ups: 🔵 Reveal=1🪙 · 💚 Extra Life=2🪙 · 🟠 Skip=3🪙
+  </div>
+  <button class="btn btn-secondary" onclick="showScreen('screen-home')">← Back</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="screen-game">
+  <div class="game-header">
+    <div class="cat-badge" id="cat-badge">Category</div>
+    <div class="word-progress" id="word-progress">Word 1 of 4</div>
+    <div class="coin-display">🪙 <span id="coin-count">0</span></div>
+  </div>
+
+  <div class="card" style="padding:12px">
+    <div class="hangman-wrap">
+      <svg class="hangman-svg" viewBox="0 0 200 200" id="hangman-svg">
+        <!-- Gallows - always shown -->
+        <line x1="20" y1="190" x2="180" y2="190" stroke="#666" stroke-width="4" stroke-linecap="round"/>
+        <line x1="60" y1="190" x2="60" y2="20" stroke="#666" stroke-width="4" stroke-linecap="round"/>
+        <line x1="60" y1="20" x2="130" y2="20" stroke="#666" stroke-width="4" stroke-linecap="round"/>
+        <line x1="130" y1="20" x2="130" y2="45" stroke="#666" stroke-width="4" stroke-linecap="round"/>
+        <!-- Body parts - toggled by JS -->
+        <circle id="hm-head" cx="130" cy="60" r="15" stroke="#e74c3c" stroke-width="3" fill="none" display="none"/>
+        <line id="hm-body" x1="130" y1="75" x2="130" y2="120" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm-la" x1="130" y1="85" x2="108" y2="105" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm-ra" x1="130" y1="85" x2="152" y2="105" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm-ll" x1="130" y1="120" x2="112" y2="148" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm-rl" x1="130" y1="120" x2="148" y2="148" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <!-- Extra parts for easy/medium -->
+        <line id="hm-lh" x1="108" y1="105" x2="100" y2="115" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm-rh" x1="152" y1="105" x2="160" y2="115" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm-lf" x1="112" y1="148" x2="104" y2="155" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm-rf" x1="148" y1="148" x2="156" y2="155" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <circle id="hm-nose" cx="133" cy="60" r="2" fill="#e74c3c" display="none"/>
+        <line id="hm-mouth" x1="125" y1="67" x2="135" y2="67" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+      </svg>
+    </div>
+
+    <div class="lives-wrap">
+      <div class="lives-label">Lives remaining</div>
+      <div class="lives-dots" id="lives-dots"></div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:14px">
+    <div class="hint-label">Hint</div>
+    <div class="hint-box" id="hint-box">...</div>
+    <div class="word-display" id="word-display"></div>
+  </div>
+
+  <div class="powerup-bar">
+    <button class="pu-btn pu-reveal" id="pu-reveal" onclick="useReveal()">🔵 Reveal<br/><small>1🪙</small></button>
+    <button class="pu-btn pu-life" id="pu-life" onclick="useExtraLife()">💚 Extra Life<br/><small>2🪙</small></button>
+    <button class="pu-btn pu-skip" id="pu-skip" onclick="useSkip()">🟠 Skip<br/><small>3🪙</small></button>
+  </div>
+
+  <div class="card" style="padding:12px">
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+</div>
+
+<!-- INSTA DEATH OVERLAY -->
+<div class="instadeath-overlay" id="instadeath-overlay">
+  <div class="instadeath-box">
+    <div class="instadeath-skull">💀</div>
+    <div class="instadeath-title">INSTANT DEATH!</div>
+    <div class="instadeath-sub">The reaper came for you on that wrong guess...</div>
+    <div style="margin-top:8px;font-size:0.9rem;opacity:0.6" id="instadeath-word"></div>
+  </div>
+</div>
+
+<!-- ROUND RESULT -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-box">
+    <div class="result-icon" id="result-icon">✅</div>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px" id="result-title">Word Solved!</div>
+    <div class="result-word">The word was: <span id="result-word-reveal"></span></div>
+    <div class="result-coins" id="result-coins-msg"></div>
+    <div style="margin-top:16px">
+      <button class="btn btn-primary" id="result-next-btn" onclick="nextWord()">Next Word ➡️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENDGAME -->
+<div class="endgame-overlay" id="endgame-overlay">
+  <div class="endgame-box">
+    <div class="endgame-icon" id="endgame-icon">🏆</div>
+    <div class="endgame-title" id="endgame-title">You Survived!</div>
+    <div class="endgame-stats" id="endgame-stats"></div>
+    <div class="endgame-coins" id="endgame-coins"></div>
+    <button class="btn btn-primary" onclick="submitScore()">📤 Submit Score</button>
+    <button class="btn btn-secondary" onclick="restartGame()">🔄 Play Again</button>
+    <button class="btn btn-secondary" onclick="goHomeFromEnd()">🏠 Home</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://zvrizstbuacdfumhsbmg.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2cml6c3RidWFjZGZ1bWhzYm1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MTI5ODgsImV4cCI6MjA4ODQ4ODk4OH0.aa6KN8LXzPrzXfrdqDY1I9694w5im8Gm2LEgDomcuOQ';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// ── Word Bank ─────────────────────────────────────────
+const WORD_BANK={
+  Animals:{
+    Easy:[
+      {word:'elephant',hint:'The largest land animal on Earth'},
+      {word:'dolphin',hint:'A clever ocean mammal that loves to play'},
+      {word:'penguin',hint:'A flightless bird found in cold climates'},
+      {word:'giraffe',hint:'The tallest living animal on land'},
+      {word:'cheetah',hint:'The fastest land animal alive'},
+      {word:'gorilla',hint:'The largest of the great apes'},
+      {word:'flamingo',hint:'A pink bird that stands on one leg'},
+      {word:'kangaroo',hint:'An Australian animal with a pouch'},
+      {word:'crocodile',hint:'A large reptile that lives near water'},
+      {word:'butterfly',hint:'An insect with colorful wings'},
+    ],
+    Medium:[
+      {word:'platypus',hint:'An egg-laying mammal from Australia'},
+      {word:'chameleon',hint:'A reptile known for changing color'},
+      {word:'orangutan',hint:'A red-haired primate from Borneo'},
+      {word:'wolverine',hint:'A fierce mammal related to the weasel'},
+      {word:'armadillo',hint:'A mammal covered in bony plates'},
+      {word:'narwhal',hint:'A whale with a long spiral tusk'},
+      {word:'axolotl',hint:'A Mexican amphibian that never grows up'},
+      {word:'capybara',hint:'The world\'s largest rodent'},
+      {word:'pangolin',hint:'The only scaled mammal in the world'},
+      {word:'tapir',hint:'A large browsing mammal with a prehensile snout'},
+    ],
+    Hard:[
+      {word:'quokka',hint:'A small marsupial'},
+      {word:'binturong',hint:'Also called a bearcat'},
+      {word:'okapi',hint:'Related to the giraffe'},
+      {word:'fossa',hint:'Madagascar\'s apex predator'},
+      {word:'numbat',hint:'A termite-eating marsupial'},
+      {word:'saiga',hint:'A critically endangered antelope'},
+      {word:'aye-aye',hint:'A nocturnal primate'},
+      {word:'gerenuk',hint:'Long-necked African gazelle'},
+      {word:'kinkajou',hint:'A rainforest mammal'},
+      {word:'zorilla',hint:'Africa\'s smelliest animal'},
+    ],
+    INSANE:[
+      {word:'olm',hint:'Cave-dwelling amphibian'},
+      {word:'tuatara',hint:'Living fossil from NZ'},
+      {word:'trogon',hint:'Colorful forest bird'},
+      {word:'caecilian',hint:'Legless amphibian'},
+      {word:'xerus',hint:'African ground squirrel'},
+    ],
+  },
+  Food:{
+    Easy:[
+      {word:'pizza',hint:'Italian dish with cheese and toppings'},
+      {word:'spaghetti',hint:'Long thin Italian pasta'},
+      {word:'hamburger',hint:'A meat patty in a bun'},
+      {word:'chocolate',hint:'A sweet made from cacao'},
+      {word:'pancake',hint:'A flat cake cooked in a pan'},
+      {word:'sandwich',hint:'Fillings between two slices of bread'},
+      {word:'popcorn',hint:'A movie theatre snack'},
+      {word:'burrito',hint:'A Mexican wrap with rice and beans'},
+      {word:'waffle',hint:'A grid-patterned breakfast food'},
+      {word:'smoothie',hint:'A blended fruit drink'},
+    ],
+    Medium:[
+      {word:'guacamole',hint:'A Mexican dip made from avocado'},
+      {word:'quesadilla',hint:'A grilled tortilla filled with cheese'},
+      {word:'prosciutto',hint:'Italian dry-cured ham'},
+      {word:'tiramisu',hint:'An Italian coffee-flavoured dessert'},
+      {word:'ratatouille',hint:'A French vegetable stew'},
+      {word:'bruschetta',hint:'Italian toasted bread with toppings'},
+      {word:'enchilada',hint:'A corn tortilla rolled around filling'},
+      {word:'risotto',hint:'A creamy Italian rice dish'},
+      {word:'ceviche',hint:'Raw fish cured in citrus juice'},
+      {word:'hummus',hint:'A Middle Eastern chickpea dip'},
+    ],
+    Hard:[
+      {word:'bouillabaisse',hint:'A Provençal fish stew'},
+      {word:'chimichanga',hint:'A deep fried burrito'},
+      {word:'goulash',hint:'Hungarian meat and paprika stew'},
+      {word:'pho',hint:'Vietnamese noodle soup'},
+      {word:'bibimbap',hint:'Korean rice bowl dish'},
+      {word:'shakshuka',hint:'Eggs poached in tomato sauce'},
+      {word:'knish',hint:'Eastern European stuffed pastry'},
+      {word:'khachapuri',hint:'Georgian cheese-filled bread'},
+      {word:'rendang',hint:'Indonesian dry beef curry'},
+      {word:'jollof',hint:'West African rice dish'},
+    ],
+    INSANE:[
+      {word:'tteokbokki',hint:'Spicy Korean rice cakes'},
+      {word:'mafaldine',hint:'Ruffled edge Italian pasta'},
+      {word:'injera',hint:'Ethiopian sourdough flatbread'},
+      {word:'mapo',hint:'Sichuan tofu dish'},
+      {word:'zankou',hint:'Lebanese garlic paste chicken'},
+    ],
+  },
+  Countries:{
+    Easy:[
+      {word:'france',hint:'Home of the Eiffel Tower'},
+      {word:'brazil',hint:'The largest country in South America'},
+      {word:'japan',hint:'The Land of the Rising Sun'},
+      {word:'australia',hint:'A country and a continent'},
+      {word:'canada',hint:'The second largest country in the world'},
+      {word:'mexico',hint:'Famous for tacos and ancient pyramids'},
+      {word:'china',hint:'The most populated country'},
+      {word:'germany',hint:'Known for Oktoberfest and engineering'},
+      {word:'egypt',hint:'Home of the ancient pyramids'},
+      {word:'spain',hint:'Famous for flamenco and bullfighting'},
+    ],
+    Medium:[
+      {word:'portugal',hint:'The westernmost country in Europe'},
+      {word:'argentina',hint:'Home of tango and Messi'},
+      {word:'thailand',hint:'The Land of Smiles in Southeast Asia'},
+      {word:'ethiopia',hint:'The oldest independent country in Africa'},
+      {word:'vietnam',hint:'Known for pho and its S-shaped coastline'},
+      {word:'ukraine',hint:'The largest country entirely in Europe'},
+      {word:'colombia',hint:'Famous for coffee and emeralds'},
+      {word:'malaysia',hint:'Home of the Petronas Towers'},
+      {word:'morocco',hint:'A North African kingdom with souks'},
+      {word:'peru',hint:'Home of Machu Picchu'},
+    ],
+    Hard:[
+      {word:'liechtenstein',hint:'A tiny principality between Switzerland and Austria'},
+      {word:'kyrgyzstan',hint:'A mountainous Central Asian nation'},
+      {word:'mozambique',hint:'An East African coastal country'},
+      {word:'azerbaijan',hint:'The Land of Fire in the Caucasus'},
+      {word:'madagascar',hint:'An island nation off Africa'},
+      {word:'suriname',hint:'The smallest country in South America'},
+      {word:'tajikistan',hint:'A landlocked Central Asian country'},
+      {word:'zimbabwe',hint:'Home of Victoria Falls'},
+      {word:'djibouti',hint:'A tiny East African country on the Gulf of Aden'},
+      {word:'vanuatu',hint:'A Pacific island archipelago nation'},
+    ],
+    INSANE:[
+      {word:'nauru',hint:'World\'s smallest island nation'},
+      {word:'tuvalu',hint:'Pacific island barely above sea level'},
+      {word:'eswatini',hint:'A small Southern African kingdom'},
+      {word:'comoros',hint:'An island nation near Madagascar'},
+      {word:'kiribati',hint:'Pacific island nation crossing the date line'},
+    ],
+  },
+  Sports:{
+    Easy:[
+      {word:'football',hint:'The most popular sport in the world'},
+      {word:'basketball',hint:'A sport played with a hoop and a ball'},
+      {word:'tennis',hint:'A racket sport played on a court'},
+      {word:'swimming',hint:'A sport performed in water'},
+      {word:'baseball',hint:'America\'s pastime with a bat and ball'},
+      {word:'volleyball',hint:'A net sport played with six players per side'},
+      {word:'cycling',hint:'A sport done on two wheels'},
+      {word:'gymnastics',hint:'A sport of balance and acrobatics'},
+      {word:'boxing',hint:'A combat sport with gloved fists'},
+      {word:'archery',hint:'A sport of shooting arrows at a target'},
+    ],
+    Medium:[
+      {word:'badminton',hint:'A racket sport played with a shuttlecock'},
+      {word:'waterpolo',hint:'A team sport played in a swimming pool'},
+      {word:'lacrosse',hint:'A sport with a stick and a net pocket'},
+      {word:'fencing',hint:'A combat sport using swords'},
+      {word:'biathlon',hint:'A winter sport combining skiing and shooting'},
+      {word:'triathlon',hint:'A race combining swimming cycling and running'},
+      {word:'bobsled',hint:'A winter racing sport on an icy track'},
+      {word:'squash',hint:'A racket sport played in an enclosed court'},
+      {word:'judo',hint:'A Japanese martial art focused on throwing'},
+      {word:'curling',hint:'A winter sport played on ice with stones'},
+    ],
+    Hard:[
+      {word:'sepaktakraw',hint:'Southeast Asian kick volleyball'},
+      {word:'pentathlon',hint:'A five-discipline Olympic sport'},
+      {word:'pelota',hint:'A Basque ball sport'},
+      {word:'kabaddi',hint:'A South Asian contact sport'},
+      {word:'korfball',hint:'A Dutch mixed-gender ball sport'},
+      {word:'canoe slalom',hint:'A whitewater obstacle racing sport'},
+      {word:'skeleton',hint:'A head-first winter sliding sport'},
+      {word:'luge',hint:'A feet-first winter sliding sport'},
+      {word:'handball',hint:'A fast team sport with a small ball'},
+      {word:'hurling',hint:'Ireland\'s ancient Gaelic sport'},
+    ],
+    INSANE:[
+      {word:'buzkashi',hint:'Central Asian sport with a goat carcass'},
+      {word:'calcio storico',hint:'Renaissance Florentine football'},
+      {word:'bossaball',hint:'Volleyball on trampolines'},
+      {word:'pato',hint:'Argentine horseback basketball'},
+      {word:'yukigassen',hint:'Japanese competitive snowball fight'},
+    ],
+  },
+  Movies:{
+    Easy:[
+      {word:'titanic',hint:'A romance set on a doomed ship'},
+      {word:'avatar',hint:'A sci-fi film set on the planet Pandora'},
+      {word:'frozen',hint:'A Disney film about a snow queen'},
+      {word:'inception',hint:'A film about entering people\'s dreams'},
+      {word:'jaws',hint:'A film about a great white shark'},
+      {word:'up',hint:'A Pixar film about an old man with balloons'},
+      {word:'grease',hint:'A classic musical set in high school'},
+      {word:'gravity',hint:'A film about astronauts lost in space'},
+      {word:'coco',hint:'A Pixar film set on the Day of the Dead'},
+      {word:'thor',hint:'A Marvel superhero with a magic hammer'},
+    ],
+    Medium:[
+      {word:'parasite',hint:'A Korean film that won the Oscar for Best Picture'},
+      {word:'whiplash',hint:'A film about a drumming student and cruel teacher'},
+      {word:'interstellar',hint:'A sci-fi film about travelling through a wormhole'},
+      {word:'gladiator',hint:'A Roman warrior seeks revenge on the emperor'},
+      {word:'memento',hint:'A film told backwards about a man with no memory'},
+      {word:'arrival',hint:'A linguist communicates with alien visitors'},
+      {word:'hereditary',hint:'A horror film about a grieving family'},
+      {word:'moonlight',hint:'A coming-of-age Oscar-winning drama'},
+      {word:'midsommar',hint:'A horror film set during a Swedish festival'},
+      {word:'oldboy',hint:'A Korean revenge thriller'},
+    ],
+    Hard:[
+      {word:'stalker',hint:'A 1979 Tarkovsky sci-fi masterpiece'},
+      {word:'nosferatu',hint:'The original vampire silent film'},
+      {word:'rashomon',hint:'A Kurosawa film about conflicting testimonies'},
+      {word:'mulholland',hint:'Lynch\'s mystery set in Hollywood'},
+      {word:'samsara',hint:'A documentary filmed in 25 countries'},
+      {word:'capernaum',hint:'A Lebanese film about a boy suing his parents'},
+      {word:'ikiru',hint:'A Kurosawa film about finding meaning in life'},
+      {word:'pather panchali',hint:'First film of Satyajit Ray\'s Apu Trilogy'},
+      {word:'shoah',hint:'A 9-hour Holocaust documentary'},
+      {word:'satantango',hint:'A 7-hour Hungarian epic'},
+    ],
+    INSANE:[
+      {word:'werckmeister',hint:'Hungarian black and white arthouse film'},
+      {word:'jeanne dielman',hint:'A Belgian feminist film'},
+      {word:'wavelength',hint:'A 45-minute zoom shot film'},
+      {word:'zardoz',hint:'A bizarre 1974 sci-fi film'},
+      {word:'alphaville',hint:'Godard\'s sci-fi noir'},
+    ],
+  },
+  Science:{
+    Easy:[
+      {word:'gravity',hint:'The force that keeps us on the ground'},
+      {word:'oxygen',hint:'The gas we breathe to survive'},
+      {word:'volcano',hint:'A mountain that can erupt with lava'},
+      {word:'eclipse',hint:'When one celestial body blocks another'},
+      {word:'photosynthesis',hint:'How plants make food from sunlight'},
+      {word:'asteroid',hint:'A rocky body orbiting the sun'},
+      {word:'molecule',hint:'The smallest unit of a substance'},
+      {word:'magnet',hint:'An object that attracts iron and steel'},
+      {word:'tornado',hint:'A violent rotating column of air'},
+      {word:'fossil',hint:'Preserved remains of ancient organisms'},
+    ],
+    Medium:[
+      {word:'mitosis',hint:'The process of cell division'},
+      {word:'entropy',hint:'The tendency toward disorder in a system'},
+      {word:'neutron',hint:'A neutral subatomic particle in the nucleus'},
+      {word:'chromosome',hint:'A structure carrying genetic information'},
+      {word:'osmosis',hint:'Water moving through a semi-permeable membrane'},
+      {word:'catalyst',hint:'A substance that speeds up a chemical reaction'},
+      {word:'supernova',hint:'The explosive death of a massive star'},
+      {word:'tectonic',hint:'Relating to the plates of the Earth\'s crust'},
+      {word:'antibody',hint:'A protein that fights infection'},
+      {word:'fission',hint:'Splitting an atomic nucleus to release energy'},
+    ],
+    Hard:[
+      {word:'eigenvalue',hint:'A scalar in linear algebra transformations'},
+      {word:'bioluminescence',hint:'Light produced by living organisms'},
+      {word:'hadron',hint:'A particle made of quarks'},
+      {word:'quasar',hint:'An extremely luminous galactic nucleus'},
+      {word:'plasmid',hint:'A small circular DNA molecule in bacteria'},
+      {word:'crispr',hint:'A gene-editing technology'},
+      {word:'thermocline',hint:'A layer of rapid temperature change in water'},
+      {word:'parsec',hint:'A unit of distance equal to 3.26 light-years'},
+      {word:'synapse',hint:'The gap between two nerve cells'},
+      {word:'perihelion',hint:'The point closest to the sun in an orbit'},
+    ],
+    INSANE:[
+      {word:'stochastic',hint:'Randomly determined process'},
+      {word:'geodesic',hint:'The shortest path on a curved surface'},
+      {word:'chirality',hint:'Mirror-image molecular asymmetry'},
+      {word:'renormalization',hint:'A quantum field theory technique'},
+      {word:'holonomy',hint:'Geometric phase acquired during parallel transport'},
+    ],
+  },
+  History:{
+    Easy:[
+      {word:'napoleon',hint:'A French emperor who conquered most of Europe'},
+      {word:'pyramid',hint:'Ancient Egyptian royal tombs'},
+      {word:'columbus',hint:'Explorer who reached the Americas in 1492'},
+      {word:'gladiator',hint:'A Roman warrior who fought in the arena'},
+      {word:'samurai',hint:'A Japanese warrior of feudal times'},
+      {word:'viking',hint:'Norse seafarers who raided Europe'},
+      {word:'pharaoh',hint:'An ancient Egyptian ruler'},
+      {word:'crusade',hint:'Medieval religious military campaigns'},
+      {word:'revolution',hint:'A violent overthrow of a government'},
+      {word:'slavery',hint:'The practice of owning people as property'},
+    ],
+    Medium:[
+      {word:'renaissance',hint:'A cultural rebirth in 14th-17th century Europe'},
+      {word:'ottoman',hint:'A Turkish empire that lasted 600 years'},
+      {word:'reformation',hint:'16th century religious revolution led by Luther'},
+      {word:'conquistador',hint:'Spanish soldiers who conquered the Americas'},
+      {word:'inquisition',hint:'A Catholic institution that persecuted heretics'},
+      {word:'guillotine',hint:'A device used in the French Revolution'},
+      {word:'apartheid',hint:'South Africa\'s racial segregation system'},
+      {word:'bolshevik',hint:'Russian revolutionary Marxist party'},
+      {word:'colonialism',hint:'A policy of extending control over other peoples'},
+      {word:'feudalism',hint:'Medieval social system based on land ownership'},
+    ],
+    Hard:[
+      {word:'peloponnesian',hint:'A war between Athens and Sparta'},
+      {word:'reconquista',hint:'Christian recapture of the Iberian Peninsula'},
+      {word:'dissolution',hint:'Henry VIII\'s closure of English monasteries'},
+      {word:'anschluss',hint:'Nazi annexation of Austria in 1938'},
+      {word:'meiji',hint:'Japanese era of rapid modernisation'},
+      {word:'janissary',hint:'Elite Ottoman infantry soldiers'},
+      {word:'serfdom',hint:'Feudal system binding peasants to land'},
+      {word:'hegemony',hint:'Dominance of one state over others'},
+      {word:'schism',hint:'The split of the Christian church in 1054'},
+      {word:'diaspora',hint:'The dispersal of people from their homeland'},
+    ],
+    INSANE:[
+      {word:'syncretic',hint:'Merging of different religious beliefs'},
+      {word:'hagiography',hint:'Writing about the lives of saints'},
+      {word:'numismatic',hint:'Study and collection of coins'},
+      {word:'eschatology',hint:'Theological study of the end of the world'},
+      {word:'palimpsest',hint:'A manuscript page reused after earlier writing was scraped off'},
+    ],
+  },
+};
+
+const ALL_CATEGORIES=Object.keys(WORD_BANK);
+const DIFF_CONFIG={
+  Easy:{lives:12,instaDeath:false,coinsPerWin:1},
+  Medium:{lives:9,instaDeath:false,coinsPerWin:2},
+  Hard:{lives:6,instaDeath:true,coinsPerWin:4},
+  INSANE:{lives:2,instaDeath:true,coinsPerWin:6},
+};
+
+// Parts in order they appear
+const HM_PARTS=['hm-head','hm-body','hm-la','hm-ra','hm-ll','hm-rl','hm-lh','hm-rh','hm-lf','hm-rf','hm-nose','hm-mouth'];
+
+// ── State ─────────────────────────────────────────────
+let nickname='';
+let difficulty='';
+let config={};
+let gameCategories=[];
+let wordIndex=0;
+let currentWord='';
+let currentHint='';
+let currentCategory='';
+let guessedLetters=new Set();
+let wrongCount=0;
+let maxLives=0;
+let coins=0;
+let sessionCoins=0;
+let wordsCompleted=0;
+let gameAlive=true;
+let scoreSubmitted=false;
+
+// ── Utils ─────────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function toast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur)}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ── Leaderboard ───────────────────────────────────────
+let currentLbTab='all';
+async function loadLeaderboard(filter='all'){
+  const tbody=document.getElementById('lb-body');
+  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:0.4;padding:12px">Loading...</td></tr>';
+  let q=sb.from('leaderboard').select('*').order('coins',{ascending:false}).limit(5);
+  if(filter!=='all') q=q.eq('difficulty',filter);
+  const{data,error}=await q;
+  if(error||!data||data.length===0){
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:0.4;padding:12px">No scores yet!</td></tr>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  tbody.innerHTML=data.map((r,i)=>`
+    <tr>
+      <td><span class="rank-medal">${medals[i]||i+1}</span></td>
+      <td><b>${r.nickname}</b></td>
+      <td><b>${r.coins}🪙</b></td>
+      <td><span class="diff-tag ${r.difficulty}">${r.difficulty}</span></td>
+      <td style="opacity:0.5;font-size:0.75rem">${new Date(r.created_at).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+}
+
+function switchLbTab(filter,btn){
+  currentLbTab=filter;
+  document.querySelectorAll('.lb-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeaderboard(filter);
+}
+
+// ── Start Flow ────────────────────────────────────────
+function goSelectDifficulty(){
+  const n=document.getElementById('player-nick').value.trim();
+  if(!n){toast('Enter your nickname!');return;}
+  nickname=n;
+  showScreen('screen-difficulty');
+}
+
+function startGame(diff){
+  difficulty=diff;
+  config=DIFF_CONFIG[diff];
+  coins=parseInt(localStorage.getItem('sots_coins')||'0');
+  sessionCoins=0;
+  wordsCompleted=0;
+  gameAlive=true;
+  scoreSubmitted=false;
+
+  // pick 4 random categories
+  gameCategories=shuffle(ALL_CATEGORIES).slice(0,4).map(cat=>{
+    const words=shuffle(WORD_BANK[cat][diff]||WORD_BANK[cat]['Hard']);
+    return{cat,word:words[0].word,hint:words[0].hint};
+  });
+
+  wordIndex=0;
+  showScreen('screen-game');
+  loadWord();
+}
+
+function loadWord(){
+  const entry=gameCategories[wordIndex];
+  currentWord=entry.word.toLowerCase();
+  currentHint=entry.hint;
+  currentCategory=entry.cat;
+  guessedLetters=new Set();
+  wrongCount=0;
+  maxLives=config.lives;
+
+  // update UI
+  document.getElementById('cat-badge').textContent='📂 '+currentCategory;
+  document.getElementById('word-progress').textContent=`Word ${wordIndex+1} of 4`;
+  document.getElementById('coin-count').textContent=coins;
+  document.getElementById('hint-box').textContent=currentHint;
+
+  // reset hangman
+  HM_PARTS.forEach(id=>document.getElementById(id).setAttribute('display','none'));
+
+  renderLives();
+  renderWord();
+  renderKeyboard();
+  updatePowerups();
+}
+
+// ── Render ────────────────────────────────────────────
+function renderLives(){
+  const wrap=document.getElementById('lives-dots');
+  wrap.innerHTML='';
+  for(let i=0;i<maxLives;i++){
+    const dot=document.createElement('div');
+    dot.className='life-dot'+(i<wrongCount?' lost':'');
+    wrap.appendChild(dot);
+  }
+}
+
+function renderWord(){
+  const wrap=document.getElementById('word-display');
+  wrap.innerHTML='';
+  for(const ch of currentWord){
+    const box=document.createElement('div');
+    if(ch===' '){
+      box.className='letter-box space';
+    } else {
+      box.className='letter-box'+(guessedLetters.has(ch)?' revealed':'');
+      box.textContent=guessedLetters.has(ch)?ch.toUpperCase():'';
+    }
+    wrap.appendChild(box);
+  }
+}
+
+function renderKeyboard(){
+  const wrap=document.getElementById('keyboard');
+  wrap.innerHTML='';
+  for(let i=65;i<=90;i++){
+    const ch=String.fromCharCode(i).toLowerCase();
+    const btn=document.createElement('button');
+    btn.className='key-btn';
+    btn.textContent=String.fromCharCode(i);
+    btn.id='key-'+ch;
+    if(guessedLetters.has(ch)){
+      btn.classList.add(currentWord.includes(ch)?'correct':'wrong');
+      btn.disabled=true;
+    }
+    btn.addEventListener('click',()=>guessLetter(ch));
+    wrap.appendChild(btn);
+  }
+}
+
+function updateHangman(){
+  // map wrong count to parts shown
+  const partsToShow=Math.min(wrongCount,HM_PARTS.length);
+  // show only available parts based on max lives
+  const step=HM_PARTS.length/maxLives;
+  const show=Math.floor(wrongCount*step);
+  HM_PARTS.forEach((id,i)=>{
+    document.getElementById(id).setAttribute('display',i<show?'block':'none');
+  });
+}
+
+function updatePowerups(){
+  document.getElementById('pu-reveal').disabled=coins<1;
+  document.getElementById('pu-life').disabled=coins<2;
+  document.getElementById('pu-skip').disabled=coins<3;
+}
+
+// ── Guess ─────────────────────────────────────────────
+function guessLetter(ch){
+  if(guessedLetters.has(ch)||!gameAlive) return;
+  guessedLetters.add(ch);
+
+  const btn=document.getElementById('key-'+ch);
+  if(currentWord.includes(ch)){
+    if(btn) btn.classList.add('correct');
+    btn.disabled=true;
+    renderWord();
+    checkWordSolved();
+  } else {
+    if(btn) btn.classList.add('wrong');
+    btn.disabled=true;
+
+    // check insta death on hard/insane
+    if(config.instaDeath){
+      const instChance=difficulty==='INSANE'?0.15:0.08;
+      if(Math.random()<instChance){
+        triggerInstaDeath();
+        return;
+      }
+    }
+
+    wrongCount++;
+    updateHangman();
+    renderLives();
+
+    if(wrongCount>=maxLives){
+      triggerDeath();
+    }
+  }
+  updatePowerups();
+}
+
+function checkWordSolved(){
+  const uniqueLetters=[...new Set(currentWord.replace(/ /g,''))];
+  const solved=uniqueLetters.every(ch=>guessedLetters.has(ch));
+  if(solved){
+    const earned=config.coinsPerWin;
+    coins+=earned;
+    sessionCoins+=earned;
+    wordsCompleted++;
+    localStorage.setItem('sots_coins',coins);
+    showRoundResult(true,earned);
+  }
+}
+
+function triggerInstaDeath(){
+  gameAlive=false;
+  const overlay=document.getElementById('instadeath-overlay');
+  document.getElementById('instadeath-word').textContent='The word was: '+currentWord.toUpperCase();
+  overlay.classList.add('show');
+  setTimeout(()=>{
+    overlay.classList.remove('show');
+    showEndGame(false);
+  },3000);
+}
+
+function triggerDeath(){
+  gameAlive=false;
+  showRoundResult(false,0);
+}
+
+// ── Round Result ──────────────────────────────────────
+function showRoundResult(won,earned){
+  const overlay=document.getElementById('result-overlay');
+  document.getElementById('result-icon').textContent=won?'✅':'💀';
+  document.getElementById('result-title').textContent=won?'Word Solved!':'You Died!';
+  document.getElementById('result-word-reveal').textContent=currentWord.toUpperCase();
+  document.getElementById('result-coins-msg').textContent=won?`+${earned} 🪙 coins earned`:'No coins this round';
+  document.getElementById('coin-count').textContent=coins;
+
+  const nextBtn=document.getElementById('result-next-btn');
+  if(!won){
+    nextBtn.textContent='💀 Game Over';
+    nextBtn.onclick=()=>{overlay.classList.remove('show');showEndGame(false);}
+  } else if(wordIndex>=3){
+    nextBtn.textContent='🏆 See Results';
+    nextBtn.onclick=()=>{overlay.classList.remove('show');showEndGame(true);}
+  } else {
+    nextBtn.textContent='Next Word ➡️';
+    nextBtn.onclick=()=>{overlay.classList.remove('show');nextWord();}
+  }
+  overlay.classList.add('show');
+}
+
+function nextWord(){
+  if(!gameAlive) return;
+  wordIndex++;
+  if(wordIndex>=4){
+    showEndGame(true);
+  } else {
+    loadWord();
+  }
+}
+
+// ── Power-ups ─────────────────────────────────────────
+function useReveal(){
+  if(coins<1){toast('Not enough coins!');return;}
+  const hidden=[...currentWord].filter(ch=>ch!==' '&&!guessedLetters.has(ch));
+  if(hidden.length===0){toast('No letters to reveal!');return;}
+  const ch=hidden[~~(Math.random()*hidden.length)];
+  coins-=1;
+  localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;
+  guessedLetters.add(ch);
+  const btn=document.getElementById('key-'+ch);
+  if(btn){btn.classList.add('correct');btn.disabled=true;}
+  renderWord();
+  updatePowerups();
+  checkWordSolved();
+}
+
+function useExtraLife(){
+  if(coins<2){toast('Not enough coins!');return;}
+  if(wrongCount===0){toast('You have no lost lives!');return;}
+  coins-=2;
+  wrongCount=Math.max(0,wrongCount-1);
+  localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;
+  renderLives();
+  updateHangman();
+  updatePowerups();
+  toast('💚 Extra life used!');
+}
+
+function useSkip(){
+  if(coins<3){toast('Not enough coins!');return;}
+  coins-=3;
+  localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;
+  updatePowerups();
+  toast('🟠 Word skipped!');
+  showRoundResult(false,0);
+}
+
+// ── End Game ──────────────────────────────────────────
+function showEndGame(won){
+  const overlay=document.getElementById('endgame-overlay');
+  document.getElementById('endgame-icon').textContent=won?'🏆':'☠️';
+  const title=document.getElementById('endgame-title');
+  title.textContent=won?'You Survived!':'You Perished!';
+  title.className='endgame-title '+(won?'win':'lose');
+  document.getElementById('endgame-stats').innerHTML=`
+    Difficulty: <b>${difficulty}</b><br/>
+    Words completed: <b>${wordsCompleted}/4</b><br/>
+    Coins earned this run: <b>${sessionCoins} 🪙</b>
+  `;
+  document.getElementById('endgame-coins').textContent=`Total coins: ${coins} 🪙`;
+  overlay.classList.add('show');
+}
+
+async function submitScore(){
+  if(scoreSubmitted){toast('Already submitted!');return;}
+  if(sessionCoins===0){toast('No coins to submit!');return;}
+  const{error}=await sb.from('leaderboard').insert({
+    nickname,coins:sessionCoins,difficulty,words_completed:wordsCompleted
+  });
+  if(error){toast('Error submitting score');console.error(error);return;}
+  scoreSubmitted=true;
+  toast('✅ Score submitted!');
+  loadLeaderboard(currentLbTab);
+}
+
+function restartGame(){
+  document.getElementById('endgame-overlay').classList.remove('show');
+  startGame(difficulty);
+}
+
+function goHomeFromEnd(){
+  document.getElementById('endgame-overlay').classList.remove('show');
+  loadLeaderboard(currentLbTab);
+  showScreen('screen-home');
+}
+
+// ── Init ──────────────────────────────────────────────
+loadLeaderboard('all');
+</script>
+</body>
+</html>
