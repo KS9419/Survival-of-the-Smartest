@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Survival of the Smartest</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--a:#ff6b35;--a2:#f7c59f}
+body{min-height:100vh;font-family:'Segoe UI',sans-serif;color:white;display:flex;flex-direction:column;align-items:center;padding:14px;padding-bottom:50px;transition:background 1s}
+body.th-default{background:linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a1a0a)}
+body.th-forest{background:linear-gradient(160deg,#0a1a08,#0d2e10,#081a04);--a:#4caf50;--a2:#8bc34a}
+body.th-dungeon{background:linear-gradient(160deg,#0d0a1a,#1a0d2e,#0a0812);--a:#7c4dff;--a2:#9c6dff}
+body.th-volcano{background:linear-gradient(160deg,#1a0500,#2e0d00,#1a0800);--a:#ff6b35;--a2:#ff9800}
+body.th-void{background:linear-gradient(160deg,#000005,#050010,#000000);--a:#e040fb;--a2:#ff1744}
+body.th-ocean{background:linear-gradient(160deg,#001a2e,#002e4a,#001828);--a:#00b4d8;--a2:#90e0ef}
+body.th-neon{background:linear-gradient(160deg,#0a001a,#150030,#0a0015);--a:#ff00ff;--a2:#00ffff}
+body.th-gold{background:linear-gradient(160deg,#1a1400,#2e2400,#1a1000);--a:#ffd700;--a2:#ffb300}
+body.th-blood{background:linear-gradient(160deg,#1a0000,#2e0000,#100000);--a:#ff1744;--a2:#ff6b6b}
+body.th-ice{background:linear-gradient(160deg,#001a2a,#002a3e,#00151f);--a:#80deea;--a2:#e0f7fa}
+body.th-cosmic{background:linear-gradient(160deg,#050010,#0a001f,#020008);--a:#7b2fff;--a2:#e040fb}
+h1{font-size:1.65rem;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2px;margin-top:8px;text-align:center}
+.subtitle{font-size:0.75rem;opacity:0.4;margin-bottom:14px;letter-spacing:3px;text-align:center;text-transform:uppercase}
+.screen{width:100%;max-width:500px;display:none;flex-direction:column;gap:10px}
+.screen.active{display:flex}
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:18px;padding:16px}
+input,select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.13);background:rgba(255,255,255,0.07);color:white;font-size:0.95rem;outline:none;margin-bottom:8px}
+input::placeholder{color:rgba(255,255,255,0.28)}
+select option{background:#1a0a2e}
+.btn{width:100%;padding:14px;border:none;border-radius:50px;font-size:0.93rem;font-weight:800;cursor:pointer;letter-spacing:1px;transition:transform 0.1s;margin-bottom:7px}
+.btn:active{transform:scale(0.97)}
+.btn:last-child{margin-bottom:0}
+.btn-primary{background:linear-gradient(135deg,var(--a),var(--a2));color:#0a0a0a}
+.btn-secondary{background:rgba(255,255,255,0.07);color:white;border:1px solid rgba(255,255,255,0.13)}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(255,107,53,0.96);color:white;padding:11px 22px;border-radius:50px;font-weight:700;z-index:9999;display:none;font-size:0.85rem;pointer-events:none;max-width:92vw;text-align:center;white-space:nowrap}
+.lbl{font-size:0.68rem;opacity:0.42;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+
+/* NAV TABS */
+.nav-tabs{display:flex;gap:4px;margin-bottom:10px;background:rgba(255,255,255,0.04);border-radius:50px;padding:4px}
+.nav-tab{flex:1;padding:8px 4px;border-radius:50px;border:none;background:transparent;color:rgba(255,255,255,0.4);font-size:0.68rem;font-weight:700;cursor:pointer;text-align:center;transition:all 0.2s;letter-spacing:0.5px}
+.nav-tab.active{background:linear-gradient(135deg,var(--a),var(--a2));color:#0a0a0a}
+
+/* MODE CARDS */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mode-card{padding:14px;border-radius:14px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;transition:all 0.15s;position:relative}
+.mode-card:active{transform:scale(0.95)}
+.mode-card.selected,.mode-card:hover{border-color:var(--a);background:rgba(255,107,53,0.08)}
+.mode-icon{font-size:1.9rem;margin-bottom:4px}
+.mode-name{font-size:0.88rem;font-weight:800}
+.mode-desc{font-size:0.66rem;opacity:0.5;margin-top:3px;line-height:1.4}
+.mode-badge{position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,#ffd700,#ff9800);color:#0a0a0a;font-size:0.58rem;font-weight:900;padding:2px 7px;border-radius:50px}
+
+/* DIFF CARDS */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.diff-card{padding:14px;border-radius:14px;border:2px solid transparent;cursor:pointer;text-align:center;transition:transform 0.15s}
+.diff-card:active{transform:scale(0.95)}
+.diff-easy{background:linear-gradient(135deg,#0a2a0a,#0d3d10);border-color:#4caf50}
+.diff-medium{background:linear-gradient(135deg,#0a0a2a,#0d1040);border-color:#7c4dff}
+.diff-hard{background:linear-gradient(135deg,#2a0a00,#3d1200);border-color:#ff6b35}
+.diff-insane{background:linear-gradient(135deg,#100005,#200008);border-color:#e040fb}
+.diff-name{font-size:1rem;font-weight:900;letter-spacing:1px}
+.diff-easy .diff-name{color:#4caf50}
+.diff-medium .diff-name{color:#7c4dff}
+.diff-hard .diff-name{color:#ff6b35}
+.diff-insane .diff-name{color:#e040fb;animation:flicker 1.5s infinite}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:0.55}}
+.diff-info{font-size:0.67rem;opacity:0.62;margin-top:3px;line-height:1.5}
+.diff-coins{font-size:0.78rem;font-weight:700;margin-top:5px}
+.diff-easy .diff-coins{color:#4caf50}
+.diff-medium .diff-coins{color:#7c4dff}
+.diff-hard .diff-coins{color:#ff6b35}
+.diff-insane .diff-coins{color:#e040fb}
+
+/* TIMER */
+.timer-wrap{height:7px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-bottom:5px}
+.timer-bar{height:100%;border-radius:4px;transition:width 1s linear}
+.t-safe{background:linear-gradient(90deg,#4caf50,#8bc34a)}
+.t-warn{background:linear-gradient(90deg,#ff9800,#ffd200)}
+.t-danger{background:linear-gradient(90deg,#e74c3c,#ff1744);animation:blink .4s infinite alternate}
+@keyframes blink{from{opacity:1}to{opacity:.5}}
+.timer-lbl{text-align:center;font-size:0.73rem;opacity:0.5;margin-bottom:4px}
+
+/* STREAK */
+.streak-bar{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:5px;font-size:0.8rem;font-weight:700}
+.s-flame{animation:flame .5s infinite alternate;font-size:1rem}
+@keyframes flame{from{transform:scale(1)}to{transform:scale(1.25)}}
+.s-pill{background:rgba(255,107,53,0.17);border:1px solid rgba(255,107,53,0.4);border-radius:50px;padding:2px 10px;font-size:0.7rem;color:#ff6b35}
+
+/* GAME HEADER */
+.game-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:5px}
+.cat-badge{background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.32);border-radius:50px;padding:4px 12px;font-size:0.76rem;font-weight:700;color:var(--a)}
+.wprog{font-size:0.74rem;opacity:0.5}
+.coin-disp{font-size:0.86rem;font-weight:700;color:var(--a2)}
+.mode-ind{font-size:0.67rem;opacity:0.42;text-align:center;margin-bottom:4px;letter-spacing:1.2px;text-transform:uppercase}
+
+/* TIME ATTACK HUD */
+.ta-hud{display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,0.05);border-radius:12px;padding:8px 14px;margin-bottom:6px}
+.ta-stat{text-align:center}
+.ta-val{font-size:1.3rem;font-weight:900;color:var(--a)}
+.ta-lbl{font-size:0.58rem;opacity:0.42;text-transform:uppercase}
+
+/* HANGMAN */
+.hm-wrap{display:flex;justify-content:center;margin:4px 0}
+.hm-svg{width:140px;height:140px}
+
+/* LIVES */
+.lives-wrap{margin:5px 0}
+.lives-lbl{font-size:0.66rem;opacity:0.45;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.lives-dots{display:flex;gap:4px;flex-wrap:wrap}
+.life-dot{width:16px;height:16px;border-radius:50%;background:#e74c3c;transition:all 0.3s;box-shadow:0 0 6px rgba(231,76,60,.5)}
+.life-dot.lost{background:rgba(255,255,255,0.07);box-shadow:none}
+
+/* WORD DISPLAY */
+.word-display{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;margin:10px 0}
+.lb{width:30px;height:38px;border-bottom:3px solid rgba(255,255,255,0.27);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:1.15rem;font-weight:900;transition:all 0.25s;text-transform:uppercase}
+.lb.revealed{border-color:var(--a);color:var(--a2);animation:pop .18s ease}
+.lb.pre{border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.45)}
+.lb.fill{border-color:#7c4dff;color:#9c6dff}
+@keyframes pop{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+.lb.space{border:none;width:12px}
+
+/* HINT */
+.hint-box{background:rgba(255,165,0,.06);border:1px solid rgba(255,165,0,.17);border-radius:10px;padding:9px 13px;font-size:0.82rem;color:var(--a2);margin-bottom:5px;line-height:1.5}
+.hint-lbl{font-size:0.66rem;text-transform:uppercase;letter-spacing:1px;opacity:0.43;margin-bottom:3px}
+.mech-badge{display:inline-block;padding:2px 10px;border-radius:50px;font-size:0.66rem;font-weight:700;margin-bottom:6px}
+.mech-partial{background:rgba(124,77,255,.18);border:1px solid rgba(124,77,255,.38);color:#9c6dff}
+.mech-fill{background:rgba(0,180,216,.18);border:1px solid rgba(0,180,216,.38);color:#00b4d8}
+
+/* KEYBOARD */
+.keyboard{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:8px 0}
+.key-btn{width:37px;height:37px;border-radius:8px;background:rgba(255,255,255,0.08);color:white;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.12s;border:1px solid rgba(255,255,255,0.11)}
+.key-btn:active{transform:scale(0.87)}
+.key-btn.correct{background:rgba(46,204,113,0.26);border-color:#2ecc71;color:#2ecc71}
+.key-btn.wrong{background:rgba(231,76,60,0.07);border-color:rgba(231,76,60,.17);color:rgba(255,255,255,0.17);cursor:default}
+.key-btn:disabled{cursor:default}
+
+/* POWER-UPS */
+.pu-bar{display:flex;gap:6px;margin:5px 0}
+.pu-btn{flex:1;padding:8px 4px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:white;font-size:0.67rem;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;transition:all 0.15s}
+.pu-btn:active{transform:scale(0.93)}
+.pu-reveal{border-color:rgba(33,150,243,.43);color:#2196f3}
+.pu-life{border-color:rgba(46,204,113,.43);color:#2ecc71}
+.pu-skip{border-color:rgba(255,152,0,.43);color:#ff9800}
+.pu-btn:disabled{opacity:0.2;cursor:default}
+
+/* INSTA DEATH */
+.id-ov{display:none;position:fixed;inset:0;z-index:500;flex-direction:column;align-items:center;justify-content:center}
+.id-ov.show{display:flex}
+.id-bg{position:absolute;inset:0;animation:id-flash .4s forwards}
+@keyframes id-flash{0%{background:#ff0000}35%{background:#8b0000}100%{background:#050000}}
+.id-cnt{position:relative;z-index:1;text-align:center;padding:28px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.id-skull{font-size:5.5rem;animation:sk-pop .5s cubic-bezier(.36,.07,.19,.97)}
+@keyframes sk-pop{0%{transform:scale(0) rotate(-180deg)}65%{transform:scale(1.25) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+.id-title{font-size:2rem;font-weight:900;color:#ff1744;letter-spacing:3px;text-transform:uppercase;animation:sli .4s .3s both}
+.id-sub{opacity:.65;animation:sli .4s .55s both}
+.id-word{font-size:1rem;color:#ff6b35;font-weight:700;animation:sli .4s .8s both}
+@keyframes sli{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESULT OVERLAY */
+.res-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.res-ov.show{display:flex}
+.res-box{background:linear-gradient(135deg,#12121e,#0e0e18);border:2px solid rgba(255,255,255,.09);border-radius:22px;padding:22px;width:100%;max-width:360px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.res-icon{font-size:3rem;margin-bottom:3px}
+.res-word span{color:var(--a2);font-weight:800;font-size:1.15rem}
+.res-coins{font-size:.92rem;color:var(--a2);font-weight:700}
+.res-streak{font-size:.82rem;color:#ff6b35;font-weight:700}
+.res-time{font-size:.73rem;opacity:.43}
+.mp-scores{margin-top:7px;font-size:.78rem;text-align:left}
+.mp-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mp-row.me{color:var(--a2);font-weight:700}
+
+/* END GAME */
+.end-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:400;flex-direction:column;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.end-ov.show{display:flex}
+.end-box{background:linear-gradient(135deg,#12121e,#0e0e18);border:2px solid rgba(255,255,255,.09);border-radius:22px;padding:22px;width:100%;max-width:400px;text-align:center;display:flex;flex-direction:column;gap:9px}
+.end-icon{font-size:3.5rem}
+.end-title{font-size:1.65rem;font-weight:900}
+.end-title.win{color:var(--a2)}
+.end-title.lose{color:#e74c3c}
+.end-stats{font-size:.82rem;opacity:.63;line-height:1.9;text-align:left;background:rgba(255,255,255,.03);border-radius:10px;padding:10px 13px}
+.end-coins{font-size:1.05rem;font-weight:800;color:var(--a2)}
+.pb-banner{background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,107,53,.08));border:1px solid rgba(255,215,0,.3);border-radius:10px;padding:8px 14px;font-size:.8rem;font-weight:700;color:#ffd700}
+
+/* LEADERBOARD */
+.lb-tabs{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.lb-tab{flex:1;padding:6px 3px;border-radius:50px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);font-size:.66rem;font-weight:700;cursor:pointer;text-align:center;min-width:40px}
+.lb-tab.active{background:linear-gradient(135deg,#ff6b35,#f7c59f);color:#0a0a0a;border-color:transparent}
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{padding:5px 6px;opacity:.38;font-size:.63rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.07);text-align:left}
+.lb-table td{padding:8px 6px;border-top:1px solid rgba(255,255,255,.05);font-size:.78rem}
+.lb-table tr:first-child td{color:#ffd700}
+.lb-table tr:nth-child(2) td{color:#c0c0c0}
+.lb-table tr:nth-child(3) td{color:#cd7f32}
+.diff-tag{padding:1px 7px;border-radius:50px;font-size:.63rem;font-weight:700}
+.diff-tag.Easy{background:rgba(76,175,80,.15);color:#4caf50}
+.diff-tag.Medium{background:rgba(124,77,255,.15);color:#7c4dff}
+.diff-tag.Hard{background:rgba(255,107,53,.15);color:#ff6b35}
+.diff-tag.INSANE{background:rgba(224,64,251,.15);color:#e040fb}
+.diff-tag.Daily{background:rgba(255,215,0,.15);color:#ffd700}
+.diff-tag.TimeAttack{background:rgba(0,180,216,.15);color:#00b4d8}
+.diff-tag.SuddenDeath{background:rgba(244,67,54,.15);color:#f44336}
+
+/* PB GRID */
+.pb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.pb-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 3px;text-align:center}
+.pb-val{font-size:.93rem;font-weight:900;color:var(--a2)}
+.pb-lbl{font-size:.56rem;opacity:.38;text-transform:uppercase;margin-top:1px}
+
+/* SHOP */
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.shop-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:all .15s}
+.shop-item:active{transform:scale(0.95)}
+.shop-item.owned{border-color:rgba(46,204,113,.38);background:rgba(46,204,113,.06)}
+.shop-item.equipped{border-color:var(--a);background:rgba(255,107,53,.09)}
+.shop-icon{font-size:1.55rem;margin-bottom:4px}
+.shop-name{font-size:.78rem;font-weight:700}
+.shop-price{font-size:.7rem;color:#ffd700;margin-top:3px}
+.shop-status{font-size:.63rem;margin-top:2px;opacity:.6}
+.shop-status.e{color:var(--a)}
+.shop-status.o{color:#2ecc71}
+
+/* MULTIPLAYER */
+.room-code{font-size:2.3rem;font-weight:900;text-align:center;letter-spacing:7px;background:linear-gradient(90deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:6px 0}
+.p-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.p-chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:50px;padding:5px 12px;font-size:.76rem}
+.p-chip.me{border-color:var(--a);color:var(--a)}
+.mp-race-grid{display:flex;flex-direction:column;gap:5px;margin-bottom:7px}
+.mp-race-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 10px;font-size:.78rem}
+.mp-race-row.me{border:1px solid rgba(255,107,53,.28);background:rgba(255,107,53,.06)}
+.mp-prog{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;width:70px}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:3px;transition:width .4s}
+
+/* DAILY BADGE */
+.daily-badge{background:linear-gradient(135deg,rgba(255,215,0,.11),rgba(255,107,53,.09));border:1px solid rgba(255,215,0,.28);border-radius:11px;padding:8px 13px;text-align:center;font-size:.78rem;color:#ffd700;font-weight:700}
+.daily-done{background:rgba(46,204,113,.09);border-color:rgba(46,204,113,.28);color:#2ecc71}
+
+/* ── THEME UI OVERRIDES ── */
+/* Cards border glow */
+body.th-ocean .card{border-color:rgba(0,180,216,0.25)}
+body.th-neon .card{border-color:rgba(255,0,255,0.25);box-shadow:0 0 8px rgba(255,0,255,0.08)}
+body.th-gold .card{border-color:rgba(255,215,0,0.25)}
+body.th-blood .card{border-color:rgba(255,23,68,0.25)}
+body.th-ice .card{border-color:rgba(128,222,234,0.25)}
+body.th-cosmic .card{border-color:rgba(123,47,255,0.25)}
+
+/* Life dots */
+body.th-ocean .life-dot{background:#00b4d8;box-shadow:0 0 6px rgba(0,180,216,.6)}
+body.th-neon .life-dot{background:#ff00ff;box-shadow:0 0 8px rgba(255,0,255,.7)}
+body.th-gold .life-dot{background:#ffd700;box-shadow:0 0 6px rgba(255,215,0,.6)}
+body.th-blood .life-dot{background:#ff1744;box-shadow:0 0 8px rgba(255,23,68,.7)}
+body.th-ice .life-dot{background:#80deea;box-shadow:0 0 6px rgba(128,222,234,.6)}
+body.th-cosmic .life-dot{background:#7b2fff;box-shadow:0 0 8px rgba(123,47,255,.7)}
+
+/* Keyboard correct */
+body.th-ocean .key-btn.correct{background:rgba(0,180,216,0.26);border-color:#00b4d8;color:#00b4d8}
+body.th-neon .key-btn.correct{background:rgba(0,255,255,0.2);border-color:#00ffff;color:#00ffff}
+body.th-gold .key-btn.correct{background:rgba(255,215,0,0.2);border-color:#ffd700;color:#ffd700}
+body.th-blood .key-btn.correct{background:rgba(255,23,68,0.2);border-color:#ff1744;color:#ff1744}
+body.th-ice .key-btn.correct{background:rgba(128,222,234,0.2);border-color:#80deea;color:#80deea}
+body.th-cosmic .key-btn.correct{background:rgba(123,47,255,0.2);border-color:#7b2fff;color:#c770ff}
+
+/* Revealed letters */
+body.th-ocean .lb.revealed{border-color:#00b4d8;color:#90e0ef}
+body.th-neon .lb.revealed{border-color:#ff00ff;color:#00ffff}
+body.th-gold .lb.revealed{border-color:#ffd700;color:#ffb300}
+body.th-blood .lb.revealed{border-color:#ff1744;color:#ff6b6b}
+body.th-ice .lb.revealed{border-color:#80deea;color:#e0f7fa}
+body.th-cosmic .lb.revealed{border-color:#7b2fff;color:#e040fb}
+
+/* Nav tabs active */
+body.th-neon .nav-tab.active{box-shadow:0 0 12px rgba(255,0,255,0.4)}
+body.th-cosmic .nav-tab.active{box-shadow:0 0 12px rgba(123,47,255,0.5)}
+body.th-blood .nav-tab.active{box-shadow:0 0 12px rgba(255,23,68,0.4)}
+
+</style>
+</head>
+<body class="th-default">
+<h1>☠️ Survival of the Smartest</h1>
+<p class="subtitle">Ultimate Edition</p>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+  <div class="card">
+    <div class="lbl">Your Name</div>
+    <input id="player-nick" placeholder="Enter nickname..." maxlength="16"/>
+    <button class="btn btn-primary" onclick="goMode()">⚔️ Play</button>
+  </div>
+  <div class="card">
+    <div class="lbl">📅 Daily Challenge</div>
+    <div id="daily-home" class="daily-badge">Loading...</div>
+  </div>
+  <div class="card">
+    <div class="lbl">🏆 Personal Bests</div>
+    <div class="pb-grid">
+      <div class="pb-cell"><div class="pb-val" id="pb-easy">—</div><div class="pb-lbl" style="color:#4caf50">Easy</div></div>
+      <div class="pb-cell"><div class="pb-val" id="pb-medium">—</div><div class="pb-lbl" style="color:#7c4dff">Medium</div></div>
+      <div class="pb-cell"><div class="pb-val" id="pb-hard">—</div><div class="pb-lbl" style="color:#ff6b35">Hard</div></div>
+      <div class="pb-cell"><div class="pb-val" id="pb-insane">—</div><div class="pb-lbl" style="color:#e040fb">INSANE</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="lbl">🌍 Leaderboard</div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" onclick="swLb('all',this)">All</button>
+      <button class="lb-tab" onclick="swLb('Easy',this)">Easy</button>
+      <button class="lb-tab" onclick="swLb('Medium',this)">Med</button>
+      <button class="lb-tab" onclick="swLb('Hard',this)">Hard</button>
+      <button class="lb-tab" onclick="swLb('INSANE',this)">INSANE</button>
+      <button class="lb-tab" onclick="swLb('Daily',this)">📅</button>
+      <button class="lb-tab" onclick="swLb('TimeAttack',this)">⏱️</button>
+    </div>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Player</th><th>Score</th><th>Mode</th><th>Date</th></tr></thead>
+      <tbody id="lb-body"><tr><td colspan="5" style="text-align:center;opacity:.3;padding:14px">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  <button class="btn btn-secondary" onclick="openShop()">🎨 Shop — 🪙 <span id="home-coins">0</span></button>
+</div>
+
+<!-- MODE SELECT -->
+<div class="screen" id="s-mode">
+  <div class="card">
+    <div class="lbl">Choose Game Mode</div>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="pickMode('classic')">
+        <div class="mode-icon">☠️</div>
+        <div class="mode-name">Classic</div>
+        <div class="mode-desc">4 words, survive them all</div>
+      </div>
+      <div class="mode-card" onclick="pickMode('timeattack')">
+        <div class="mode-icon">⏱️</div>
+        <div class="mode-name">Time Attack</div>
+        <div class="mode-desc">Max words in 2 minutes</div>
+      </div>
+      <div class="mode-card" onclick="pickMode('suddendeath')">
+        <div class="mode-icon">💀</div>
+        <div class="mode-name">Sudden Death</div>
+        <div class="mode-desc">One wrong guess = dead</div>
+        <div class="mode-badge">HARDCORE</div>
+      </div>
+      <div class="mode-card" onclick="pickMode('daily')">
+        <div class="mode-icon">📅</div>
+        <div class="mode-name">Daily Challenge</div>
+        <div class="mode-desc">Same words for everyone</div>
+        <div class="mode-badge">DAILY</div>
+      </div>
+      <div class="mode-card" onclick="pickMode('multiplayer')" style="grid-column:1/-1">
+        <div class="mode-icon">👥</div>
+        <div class="mode-name">Multiplayer Race</div>
+        <div class="mode-desc">Race friends to solve the same word first!</div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-secondary" onclick="ss('s-home')">← Back</button>
+</div>
+
+<!-- DIFFICULTY SELECT -->
+<div class="screen" id="s-diff">
+  <div class="card">
+    <div class="lbl">Choose Difficulty</div>
+    <div class="diff-grid">
+      <div class="diff-card diff-easy" onclick="startGame('Easy')">
+        <div class="diff-name">EASY</div>
+        <div class="diff-info">12 lives · 90s · 🌲 Forest<br/>No insta-death</div>
+        <div class="diff-coins">🪙 1 coin/win</div>
+      </div>
+      <div class="diff-card diff-medium" onclick="startGame('Medium')">
+        <div class="diff-name">MEDIUM</div>
+        <div class="diff-info">9 lives · 60s · 🏰 Dungeon<br/>No insta-death</div>
+        <div class="diff-coins">🪙 2 coins/win</div>
+      </div>
+      <div class="diff-card diff-hard" onclick="startGame('Hard')">
+        <div class="diff-name">HARD</div>
+        <div class="diff-info">6 lives · 45s · 🌋 Volcano<br/>⚡ 8% insta-death</div>
+        <div class="diff-coins">🪙 4 coins/win</div>
+      </div>
+      <div class="diff-card diff-insane" onclick="startGame('INSANE')">
+        <div class="diff-name">INSANE</div>
+        <div class="diff-info">2 lives · 20s · ☠️ Void<br/>⚡ 15% insta-death</div>
+        <div class="diff-coins">🪙 6 coins/win</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="font-size:.74rem;opacity:.5;text-align:center;line-height:1.8">
+    🔥 Streak: 2 wins +1🪙 · 4 wins +3🪙<br/>
+    🧩 New mechanics on Hard/INSANE: Partial Reveal & Fill the Blank<br/>
+    🔵 Reveal=1🪙 · 💚 Life=2🪙 · 🟠 Skip=3🪙
+  </div>
+  <button class="btn btn-secondary" onclick="ss('s-mode')">← Back</button>
+</div>
+
+<!-- MULTIPLAYER SETUP -->
+<div class="screen" id="s-mp-setup">
+  <div class="card">
+    <div class="lbl">Multiplayer Race</div>
+    <div style="font-size:.76rem;opacity:.5;margin-bottom:12px;line-height:1.6">Everyone sees the same word. First to solve wins the round! Play 4 rounds.</div>
+    <button class="btn btn-primary" onclick="mpCreate()">🏠 Create Room</button>
+    <input id="mp-code-in" placeholder="Room code to join..." maxlength="30" style="text-transform:uppercase;letter-spacing:3px;text-align:center"/>
+    <button class="btn btn-secondary" onclick="mpJoin()">🚪 Join Room</button>
+  </div>
+  <button class="btn btn-secondary" onclick="ss('s-mode')">← Back</button>
+</div>
+
+<!-- MP LOBBY -->
+<div class="screen" id="s-mp-lobby">
+  <div class="card" style="text-align:center">
+    <div class="lbl">Room Code — Share with friends</div>
+    <div class="room-code" id="mp-room-code">------</div>
+    <button class="btn btn-secondary" style="padding:9px;font-size:.76rem;margin-top:6px" onclick="copyCode()">📋 Copy Code</button>
+  </div>
+  <div class="card">
+    <div class="lbl">Players (<span id="mp-p-count">1</span>/6)</div>
+    <div class="p-chips" id="mp-chips"></div>
+    <p style="opacity:.38;font-size:.74rem;margin-top:8px;text-align:center" id="mp-lobby-status">Waiting for players...</p>
+  </div>
+  <button class="btn btn-primary" id="mp-start-btn" style="display:none" onclick="mpStartGame()">🚀 Start Race!</button>
+  <button class="btn btn-secondary" onclick="mpLeave()">← Leave Room</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="s-game">
+  <div class="mode-ind" id="mode-ind">Classic Mode</div>
+  <div class="game-hdr">
+    <div class="cat-badge" id="cat-badge">Category</div>
+    <div class="wprog" id="wprog">1/4</div>
+    <div class="coin-disp">🪙 <span id="coin-count">0</span></div>
+  </div>
+  <div class="streak-bar" id="streak-bar" style="display:none">
+    <span class="s-flame">🔥</span>
+    <span id="streak-lbl">Streak!</span>
+    <span class="s-pill" id="streak-pill"></span>
+  </div>
+  <div class="ta-hud" id="ta-hud" style="display:none">
+    <div class="ta-stat"><div class="ta-val" id="ta-time">120</div><div class="ta-lbl">Seconds</div></div>
+    <div class="ta-stat"><div class="ta-val" id="ta-words">0</div><div class="ta-lbl">Words</div></div>
+    <div class="ta-stat"><div class="ta-val" id="ta-coins">0</div><div class="ta-lbl">Coins</div></div>
+  </div>
+  <div id="normal-timer-wrap">
+    <div class="timer-wrap"><div class="timer-bar t-safe" id="timer-bar" style="width:100%"></div></div>
+    <div class="timer-lbl" id="timer-lbl">⏱ 90s</div>
+  </div>
+  <div class="mp-race-grid" id="mp-race-grid" style="display:none"></div>
+  <div class="card" style="padding:11px">
+    <div class="hm-wrap">
+      <svg class="hm-svg" viewBox="0 0 200 200" id="hm-svg">
+        <line x1="20" y1="190" x2="180" y2="190" stroke="#444" stroke-width="4" stroke-linecap="round"/>
+        <line x1="60" y1="190" x2="60" y2="20" stroke="#444" stroke-width="4" stroke-linecap="round"/>
+        <line x1="60" y1="20" x2="130" y2="20" stroke="#444" stroke-width="4" stroke-linecap="round"/>
+        <line x1="130" y1="20" x2="130" y2="45" stroke="#444" stroke-width="4" stroke-linecap="round"/>
+        <circle id="hm0" cx="130" cy="60" r="15" stroke="#e74c3c" stroke-width="3" fill="none" display="none"/>
+        <line id="hm1" x1="130" y1="75" x2="130" y2="120" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm2" x1="130" y1="85" x2="108" y2="105" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm3" x1="130" y1="85" x2="152" y2="105" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm4" x1="130" y1="120" x2="112" y2="148" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm5" x1="130" y1="120" x2="148" y2="148" stroke="#e74c3c" stroke-width="3" stroke-linecap="round" display="none"/>
+        <line id="hm6" x1="108" y1="105" x2="100" y2="115" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm7" x1="152" y1="105" x2="160" y2="115" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm8" x1="112" y1="148" x2="104" y2="155" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <line id="hm9" x1="148" y1="148" x2="156" y2="155" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+        <circle id="hm10" cx="133" cy="59" r="2" fill="#e74c3c" display="none"/>
+        <line id="hm11" x1="124" y1="67" x2="136" y2="67" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" display="none"/>
+      </svg>
+    </div>
+    <div class="lives-wrap" id="lives-wrap-el">
+      <div class="lives-lbl">Lives remaining</div>
+      <div class="lives-dots" id="lives-dots"></div>
+    </div>
+  </div>
+  <div class="card" style="padding:13px">
+    <div id="mech-badge-wrap"></div>
+    <div class="hint-lbl">Hint</div>
+    <div class="hint-box" id="hint-box">...</div>
+    <div class="word-display" id="word-display"></div>
+  </div>
+  <div class="pu-bar">
+    <button class="pu-btn pu-reveal" id="pu-reveal" onclick="useReveal()">🔵 Reveal<br/><small>1🪙</small></button>
+    <button class="pu-btn pu-life" id="pu-life" onclick="useExtraLife()">💚 Life<br/><small>2🪙</small></button>
+    <button class="pu-btn pu-skip" id="pu-skip" onclick="useSkip()">🟠 Skip<br/><small>3🪙</small></button>
+  </div>
+  <div class="card" style="padding:10px">
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div class="screen" id="s-shop">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="lbl" style="margin:0">🎨 Shop & Cosmetics</div>
+      <span style="font-size:1rem;font-weight:900;color:#ffd700" id="shop-coins-disp">0🪙</span>
+    </div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="swShop('themes',this)">🎨 Themes</div>
+      <div class="nav-tab" onclick="swShop('skins',this)">💀 Skins</div>
+    </div>
+    <div id="shop-themes" class="shop-grid"></div>
+    <div id="shop-skins" class="shop-grid" style="display:none"></div>
+  </div>
+  <button class="btn btn-secondary" onclick="ss('s-home')">← Back</button>
+</div>
+
+<!-- INSTA DEATH -->
+<div class="id-ov" id="id-ov">
+  <div class="id-bg"></div>
+  <div class="id-cnt">
+    <div class="id-skull">💀</div>
+    <div class="id-title">INSTANT DEATH!</div>
+    <div class="id-sub">The reaper took your soul...</div>
+    <div class="id-word" id="id-word"></div>
+  </div>
+</div>
+
+<!-- ROUND RESULT -->
+<div class="res-ov" id="res-ov">
+  <div class="res-box">
+    <div class="res-icon" id="res-icon">✅</div>
+    <div style="font-size:1rem;font-weight:800;margin-bottom:3px" id="res-title">Word Solved!</div>
+    <div class="res-word" style="opacity:.7">The word was: <span id="res-word-el"></span></div>
+    <div class="res-coins" id="res-coins"></div>
+    <div class="res-streak" id="res-streak" style="display:none"></div>
+    <div class="res-time" id="res-time"></div>
+    <div class="mp-scores" id="res-mp" style="display:none"></div>
+    <button class="btn btn-primary" id="res-next" style="margin-top:12px">Next ➡️</button>
+  </div>
+</div>
+
+<!-- END GAME -->
+<div class="end-ov" id="end-ov">
+  <div class="end-box">
+    <div class="end-icon" id="end-icon">🏆</div>
+    <div class="end-title" id="end-title">You Survived!</div>
+    <div class="end-stats" id="end-stats"></div>
+    <div class="end-coins" id="end-coins"></div>
+    <div class="pb-banner" id="pb-banner" style="display:none"></div>
+    <button class="btn btn-primary" onclick="submitScore()">📤 Submit Score</button>
+    <button class="btn btn-secondary" onclick="restartGame()">🔄 Play Again</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 Home</button>
+  </div>
+</div>
+
+<script>
+// ══ SUPABASE ══
+const SB=supabase.createClient('https://zvrizstbuacdfumhsbmg.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2cml6c3RidWFjZGZ1bWhzYm1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MTI5ODgsImV4cCI6MjA4ODQ4ODk4OH0.aa6KN8LXzPrzXfrdqDY1I9694w5im8Gm2LEgDomcuOQ');
+
+// ══ SOUND ══
+const AC=typeof AudioContext!=='undefined'?new AudioContext():typeof webkitAudioContext!=='undefined'?new webkitAudioContext():null;
+function snd(t){
+  if(!AC)return;if(AC.state==='suspended')AC.resume();
+  const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);const n=AC.currentTime;
+  if(t==='correct'){o.frequency.setValueAtTime(523,n);o.frequency.setValueAtTime(659,n+.08);o.frequency.setValueAtTime(784,n+.16);g.gain.setValueAtTime(.13,n);g.gain.exponentialRampToValueAtTime(.001,n+.4);o.start();o.stop(n+.4);}
+  else if(t==='wrong'){o.type='sawtooth';o.frequency.setValueAtTime(180,n);o.frequency.exponentialRampToValueAtTime(70,n+.25);g.gain.setValueAtTime(.1,n);g.gain.exponentialRampToValueAtTime(.001,n+.3);o.start();o.stop(n+.3);}
+  else if(t==='win'){[523,659,784,1047].forEach((f,i)=>{const oo=AC.createOscillator(),gg=AC.createGain();oo.connect(gg);gg.connect(AC.destination);oo.frequency.value=f;gg.gain.setValueAtTime(.1,n+i*.1);gg.gain.exponentialRampToValueAtTime(.001,n+i*.1+.3);oo.start(n+i*.1);oo.stop(n+i*.1+.3);});}
+  else if(t==='death'){o.type='sawtooth';o.frequency.setValueAtTime(280,n);o.frequency.exponentialRampToValueAtTime(35,n+.9);g.gain.setValueAtTime(.18,n);g.gain.exponentialRampToValueAtTime(.001,n+.9);o.start();o.stop(n+.9);}
+  else if(t==='tick'){o.frequency.value=880;g.gain.setValueAtTime(.04,n);g.gain.exponentialRampToValueAtTime(.001,n+.05);o.start();o.stop(n+.05);}
+  else if(t==='streak'){[500,700,900,1200].forEach((f,i)=>{const oo=AC.createOscillator(),gg=AC.createGain();oo.connect(gg);gg.connect(AC.destination);oo.frequency.value=f;gg.gain.setValueAtTime(.08,n+i*.06);gg.gain.exponentialRampToValueAtTime(.001,n+i*.06+.12);oo.start(n+i*.06);oo.stop(n+i*.06+.12);});}
+}
+
+// ══ WORD BANK ══
+const CATS=['Animals','Food','Countries','Sports','Movies','Science','History','Music','Technology','Mythology'];
+const WB={
+Animals:{
+Easy:[{w:'elephant',h:'Largest land animal'},{w:'dolphin',h:'Clever leaping ocean mammal'},{w:'penguin',h:'Antarctic bird in a tuxedo'},{w:'giraffe',h:'Tallest living land animal'},{w:'cheetah',h:'Fastest land animal'},{w:'gorilla',h:'Largest of the great apes'},{w:'flamingo',h:'Pink bird that stands on one leg'},{w:'kangaroo',h:'Australian marsupial with a pouch'},{w:'crocodile',h:'Ancient reptile lurking near water'},{w:'butterfly',h:'Insect with colourful wings'},{w:'leopard',h:'Spotted big cat that climbs trees'},{w:'octopus',h:'Eight-armed sea creature'},{w:'peacock',h:'Bird with spectacular tail feathers'},{w:'hedgehog',h:'Small spiny nocturnal mammal'},{w:'platypus',h:'Egg-laying Australian mammal'}],
+Medium:[{w:'chameleon',h:'Reptile that changes colour'},{w:'orangutan',h:'Red-haired Bornean primate'},{w:'wolverine',h:'Fierce weasel-family mammal'},{w:'armadillo',h:'Mammal covered in bony plates'},{w:'narwhal',h:'Whale with a spiral tusk'},{w:'axolotl',h:'Mexican salamander that stays juvenile'},{w:'capybara',h:"World's largest rodent"},{w:'pangolin',h:'The only scaled mammal'},{w:'tapir',h:'Mammal with a prehensile snout'},{w:'meerkat',h:'Small mongoose that stands sentry'},{w:'wombat',h:'Australian burrowing marsupial'},{w:'lemur',h:'Primate native to Madagascar'},{w:'manatee',h:'Gentle sea cow of warm waters'},{w:'binturong',h:'Bearcat of Southeast Asia'},{w:'okapi',h:'Striped relative of the giraffe'}],
+Hard:[{w:'quokka',h:'Smiling marsupial of Australia'},{w:'fossa',h:"Madagascar's apex predator"},{w:'numbat',h:'Termite-eating marsupial'},{w:'saiga',h:'Critically endangered antelope'},{w:'gerenuk',h:'Long-necked African gazelle'},{w:'kinkajou',h:'Honey-eating rainforest mammal'},{w:'zorilla',h:"Africa's most pungent animal"},{w:'takin',h:'Himalayan bovid related to musk ox'},{w:'peccary',h:'Wild pig of the Americas'},{w:'serval',h:'Tall-eared African wild cat'},{w:'margay',h:'Small spotted South American cat'},{w:'potoo',h:'Camouflaged nocturnal bird'},{w:'desman',h:'Aquatic mole-like mammal'},{w:'pika',h:'Small alpine rabbit relative'},{w:'quoll',h:'Spotted carnivorous marsupial'}],
+INSANE:[{w:'olm',h:'Blind cave salamander'},{w:'tuatara',h:'NZ living reptile fossil'},{w:'caecilian',h:'Legless burrowing amphibian'},{w:'xerus',h:'African ground squirrel'},{w:'dugong',h:'Sea cow of warm coastal waters'},{w:'gaur',h:"World's largest wild bovine"}]
+},
+Food:{
+Easy:[{w:'pizza',h:'Italian dish with cheese and toppings'},{w:'spaghetti',h:'Long thin Italian pasta'},{w:'hamburger',h:'Meat patty in a bun'},{w:'chocolate',h:'Sweet treat made from cacao'},{w:'pancake',h:'Flat cake cooked in a pan'},{w:'sandwich',h:'Fillings between two slices of bread'},{w:'popcorn',h:'Classic movie snack'},{w:'burrito',h:'Mexican wrap with rice and beans'},{w:'waffle',h:'Grid-patterned breakfast food'},{w:'croissant',h:'Buttery flaky French pastry'},{w:'lasagne',h:'Layered Italian pasta bake'},{w:'doughnut',h:'Ring-shaped fried sweet dough'},{w:'brownie',h:'Dense chocolate square cake'},{w:'falafel',h:'Middle Eastern fried chickpea ball'},{w:'omelette',h:'Folded egg dish with fillings'}],
+Medium:[{w:'guacamole',h:'Mexican avocado dip'},{w:'quesadilla',h:'Grilled cheese-filled tortilla'},{w:'prosciutto',h:'Italian dry-cured ham'},{w:'tiramisu',h:'Italian coffee-flavoured dessert'},{w:'ratatouille',h:'Provençal vegetable stew'},{w:'bruschetta',h:'Italian toasted bread with toppings'},{w:'enchilada',h:'Corn tortilla rolled around filling'},{w:'risotto',h:'Creamy Italian rice dish'},{w:'ceviche',h:'Raw fish cured in citrus juice'},{w:'hummus',h:'Middle Eastern chickpea dip'},{w:'gazpacho',h:'Cold Spanish tomato soup'},{w:'gnocchi',h:'Italian potato dumplings'},{w:'tagine',h:'Moroccan slow-cooked stew'},{w:'baklava',h:'Layered honey and nut pastry'},{w:'shakshuka',h:'Eggs poached in spiced tomato sauce'}],
+Hard:[{w:'bouillabaisse',h:'Provençal French fish stew'},{w:'chimichanga',h:'Deep-fried burrito'},{w:'goulash',h:'Hungarian meat and paprika stew'},{w:'bibimbap',h:'Korean mixed rice bowl'},{w:'khachapuri',h:'Georgian cheese-filled bread'},{w:'rendang',h:'Indonesian dry beef curry'},{w:'jollof',h:'West African rice dish'},{w:'tteokbokki',h:'Spicy Korean rice cakes'},{w:'injera',h:'Ethiopian sourdough flatbread'},{w:'mafaldine',h:'Ruffled-edge Italian pasta'},{w:'poutine',h:'Canadian fries with gravy and cheese curds'},{w:'moussaka',h:'Greek layered aubergine bake'},{w:'stroganoff',h:'Russian beef in sour cream sauce'},{w:'croquembouche',h:'French tower of cream puffs'},{w:'chateaubriand',h:'Thick centre-cut beef tenderloin'}],
+INSANE:[{w:'lutefisk',h:'Nordic lye-cured dried fish'},{w:'hakarl',h:'Fermented Greenlandic shark'},{w:'surströmming',h:'Swedish fermented herring'},{w:'natto',h:'Fermented Japanese soybeans'},{w:'balut',h:'Filipino fertilised duck egg'},{w:'durian',h:'Spiky fruit with extreme odour'}]
+},
+Countries:{
+Easy:[{w:'france',h:'Home of the Eiffel Tower'},{w:'brazil',h:'Largest country in South America'},{w:'japan',h:'Land of the Rising Sun'},{w:'australia',h:'A country and a continent'},{w:'canada',h:'Second largest country in the world'},{w:'mexico',h:'Famous for tacos and ancient pyramids'},{w:'china',h:'Most populated country on Earth'},{w:'germany',h:'Known for Oktoberfest and engineering'},{w:'egypt',h:'Home of the ancient pyramids'},{w:'spain',h:'Famous for flamenco and football'},{w:'italy',h:'Birthplace of pizza and pasta'},{w:'india',h:'Second most populated country'},{w:'greece',h:'Birthplace of democracy'},{w:'russia',h:'Largest country by land area'},{w:'turkey',h:'Country spanning two continents'}],
+Medium:[{w:'portugal',h:'Westernmost country in mainland Europe'},{w:'argentina',h:'Home of tango and Messi'},{w:'thailand',h:'The Land of Smiles'},{w:'ethiopia',h:'Oldest independent country in Africa'},{w:'vietnam',h:'S-shaped country known for pho'},{w:'ukraine',h:'Largest country entirely in Europe'},{w:'colombia',h:'Famous for coffee and emeralds'},{w:'malaysia',h:'Home of the Petronas Towers'},{w:'morocco',h:'North African kingdom with medinas'},{w:'peru',h:'Home of Machu Picchu'},{w:'nigeria',h:'Most populous country in Africa'},{w:'indonesia',h:"World's largest archipelago nation"},{w:'pakistan',h:'Fifth most populous country'},{w:'bangladesh',h:'Delta nation of South Asia'},{w:'myanmar',h:'Southeast Asian nation formerly known as Burma'}],
+Hard:[{w:'liechtenstein',h:'Tiny principality between Switzerland and Austria'},{w:'kyrgyzstan',h:'Mountainous Central Asian nation'},{w:'mozambique',h:'East African coastal country'},{w:'azerbaijan',h:'Land of Fire in the Caucasus'},{w:'suriname',h:'Smallest country in South America'},{w:'tajikistan',h:'Landlocked Central Asian country'},{w:'zimbabwe',h:'Home of Victoria Falls'},{w:'djibouti',h:'Tiny East African country on the Horn'},{w:'vanuatu',h:'Pacific island archipelago nation'},{w:'madagascar',h:'Island nation off East Africa'},{w:'eswatini',h:'Small Southern African kingdom'},{w:'comoros',h:'Island nation near Madagascar'},{w:'kiribati',h:'Pacific nation crossing the date line'},{w:'moldova',h:'Landlocked between Romania and Ukraine'},{w:'andorra',h:'Tiny state in the Pyrenees mountains'}],
+INSANE:[{w:'nauru',h:"World's smallest island nation"},{w:'tuvalu',h:'Pacific island barely above sea level'},{w:'palau',h:'Micronesian archipelago in the Pacific'},{w:'niue',h:'Self-governing Pacific island state'},{w:'tokelau',h:'NZ territory of three atolls'},{w:'pitcairn',h:'Remotest inhabited island territory'}]
+},
+Sports:{
+Easy:[{w:'football',h:'Most popular sport globally'},{w:'basketball',h:'Sport with hoops and a round ball'},{w:'tennis',h:'Racket sport on a court'},{w:'swimming',h:'Sport performed in water'},{w:'baseball',h:"America's pastime"},{w:'volleyball',h:'Six players per side over a net'},{w:'cycling',h:'Sport on two wheels'},{w:'gymnastics',h:'Sport of balance and acrobatics'},{w:'boxing',h:'Combat sport with padded gloves'},{w:'archery',h:'Shooting arrows at a target'},{w:'surfing',h:'Riding ocean waves on a board'},{w:'skiing',h:'Gliding down snowy slopes'},{w:'golf',h:'Hitting a small ball into holes'},{w:'rugby',h:'Full-contact ball sport with oval ball'},{w:'cricket',h:'Bat and ball sport popular in England'}],
+Medium:[{w:'badminton',h:'Racket sport played with a shuttlecock'},{w:'waterpolo',h:'Team sport in a swimming pool'},{w:'lacrosse',h:'Sport with a stick and net pocket'},{w:'fencing',h:'Combat sport using swords'},{w:'biathlon',h:'Winter sport combining skiing and shooting'},{w:'triathlon',h:'Swim cycle run race combined'},{w:'bobsled',h:'Racing down an icy track in a sled'},{w:'squash',h:'Racket sport in an enclosed court'},{w:'judo',h:'Japanese throwing martial art'},{w:'curling',h:'Winter sport with stones on ice'},{w:'handball',h:'Fast team sport with a small ball'},{w:'hurling',h:'Ancient Irish Gaelic sport'},{w:'pentathlon',h:'Five-discipline Olympic sport'},{w:'skeleton',h:'Head-first winter sliding sport'},{w:'kabaddi',h:'South Asian contact team sport'}],
+Hard:[{w:'sepaktakraw',h:'Southeast Asian kick volleyball'},{w:'pelota',h:'Basque ball sport'},{w:'korfball',h:'Dutch mixed-gender ball sport'},{w:'buzkashi',h:'Central Asian sport with a goat carcass'},{w:'bossaball',h:'Volleyball on trampolines'},{w:'pato',h:'Argentine horseback basketball'},{w:'yukigassen',h:'Japanese competitive snowball fight'},{w:'polocrosse',h:'Horseback version of lacrosse'},{w:'pesapallo',h:'Finnish version of baseball'},{w:'tchoukball',h:'Non-contact Swiss team sport'},{w:'footvolley',h:'Brazilian beach sport combining football and volleyball'},{w:'slamball',h:'Basketball played on trampolines'},{w:'gateball',h:'Japanese mallet sport'},{w:'fierljeppen',h:'Dutch canal pole vaulting'},{w:'lelo burti',h:'Georgian folk football game'}],
+INSANE:[{w:'calcio storico',h:'Renaissance Florentine football'},{w:'bunnock',h:'Canadian game with horse bones'},{w:'hornussen',h:'Swiss projectile bat sport'},{w:'combat juggling',h:'Juggling while stopping opponents'},{w:'extreme ironing',h:'Ironing in extreme locations'}]
+},
+Movies:{
+Easy:[{w:'titanic',h:'Romance set on a doomed ship'},{w:'avatar',h:'Sci-fi set on the planet Pandora'},{w:'frozen',h:'Disney film about a snow queen'},{w:'inception',h:'Film about entering dreams'},{w:'jaws',h:'Classic great white shark thriller'},{w:'up',h:'Pixar film with an old man and balloons'},{w:'grease',h:'Classic musical set in high school'},{w:'gravity',h:'Astronauts lost in space'},{w:'coco',h:'Pixar film set on Day of the Dead'},{w:'thor',h:'Marvel god with a magic hammer'},{w:'shrek',h:'Animated film about a green ogre'},{w:'mulan',h:'Disney film about a Chinese warrior'},{w:'alien',h:'Sci-fi horror on a spaceship'},{w:'psycho',h:'Hitchcock thriller set at a motel'},{w:'rocky',h:'Boxer fights for championship'}],
+Medium:[{w:'parasite',h:'Korean Oscar-winning dark comedy'},{w:'whiplash',h:'Brutal drumming student and teacher'},{w:'interstellar',h:'Travelling through a wormhole to save Earth'},{w:'gladiator',h:'Roman warrior seeks revenge on the emperor'},{w:'memento',h:'Backwards film about a man with no memory'},{w:'arrival',h:'Linguist communicates with alien visitors'},{w:'hereditary',h:'Horror about a grieving cursed family'},{w:'moonlight',h:'Coming-of-age Oscar-winning drama'},{w:'midsommar',h:'Horror set at a Swedish summer festival'},{w:'oldboy',h:'Korean revenge thriller'},{w:'nightcrawler',h:'Crime thriller about a freelance journalist'},{w:'prisoners',h:'Thriller about missing children'},{w:'sicario',h:'Drug war thriller on the Mexico border'},{w:'uncut gems',h:'Adam Sandler gambling thriller'},{w:'gone girl',h:'Thriller about a missing wife'}],
+Hard:[{w:'stalker',h:'1979 Tarkovsky philosophical sci-fi'},{w:'nosferatu',h:'The original vampire silent film'},{w:'rashomon',h:'Kurosawa film with conflicting testimonies'},{w:'capernaum',h:'Lebanese film about a boy suing his parents'},{w:'ikiru',h:'Kurosawa film about finding meaning'},{w:'persona',h:'Bergman merging identities film'},{w:'vertigo',h:'Hitchcock film about obsession'},{w:'tokyo story',h:"Ozu's masterpiece about aging parents"},{w:'sansho the bailiff',h:'Japanese medieval moral epic'},{w:'ugetsu',h:'Japanese civil war ghost story'},{w:'alphaville',h:"Godard's sci-fi noir"},{w:'wavelength',h:'45-minute zoom shot experimental film'},{w:'dogtooth',h:'Greek extreme family isolation film'},{w:'satantango',h:'Seven-hour Hungarian epic'},{w:'caché',h:"Haneke's French surveillance thriller"}],
+INSANE:[{w:'werckmeister harmonies',h:'Hungarian arthouse black and white film'},{w:'synecdoche new york',h:'Kaufman theatre director epic'},{w:'zardoz',h:'Bizarre 1974 sci-fi with Sean Connery'},{w:'uncle boonmee',h:'Thai film about a man recalling past lives'},{w:'jeanne dielman',h:'Belgian feminist 3-hour masterpiece'}]
+},
+Science:{
+Easy:[{w:'gravity',h:'Force that keeps us on the ground'},{w:'oxygen',h:'Gas essential for breathing'},{w:'volcano',h:'Mountain that erupts with lava'},{w:'eclipse',h:'When one celestial body blocks another'},{w:'photosynthesis',h:'How plants make food from sunlight'},{w:'asteroid',h:'Rocky body orbiting the sun'},{w:'molecule',h:'Smallest unit of a substance'},{w:'magnet',h:'Object that attracts iron'},{w:'tornado',h:'Violent rotating column of air'},{w:'fossil',h:'Preserved remains of ancient life'},{w:'atom',h:'Basic building block of matter'},{w:'comet',h:'Icy body that grows a tail near the sun'},{w:'prism',h:'Glass that splits light into colours'},{w:'erosion',h:'Wearing away of rock by wind and water'},{w:'magma',h:'Molten rock beneath the surface'}],
+Medium:[{w:'mitosis',h:'Process of cell division'},{w:'entropy',h:'Tendency toward disorder in a system'},{w:'neutron',h:'Neutral subatomic particle in the nucleus'},{w:'chromosome',h:'Structure carrying genetic information'},{w:'osmosis',h:'Water moving through a semi-permeable membrane'},{w:'catalyst',h:'Substance that speeds up a reaction'},{w:'supernova',h:'Explosive death of a massive star'},{w:'antibody',h:'Protein that fights infection'},{w:'fission',h:'Splitting an atomic nucleus for energy'},{w:'tectonic',h:"Relating to Earth's crustal plates"},{w:'crispr',h:'Revolutionary gene-editing technology'},{w:'quasar',h:'Extremely luminous galactic nucleus'},{w:'plasmid',h:'Small circular DNA in bacteria'},{w:'synapse',h:'Gap between two nerve cells'},{w:'perihelion',h:'Closest orbital point to the sun'}],
+Hard:[{w:'eigenvalue',h:'Scalar in a linear transformation'},{w:'bioluminescence',h:'Light produced by living organisms'},{w:'hadron',h:'Particle composed of quarks'},{w:'thermocline',h:'Layer of rapid ocean temperature change'},{w:'parsec',h:'3.26 light-year distance unit'},{w:'stochastic',h:'Randomly determined process'},{w:'geodesic',h:'Shortest path on a curved surface'},{w:'chirality',h:'Mirror-image molecular asymmetry'},{w:'soliton',h:'Self-reinforcing wave packet'},{w:'nutation',h:"Wobbling of Earth's axis"},{w:'apoptosis',h:'Programmed cell death'},{w:'schwann cell',h:'Cell forming peripheral nerve myelin'},{w:'renormalization',h:'Quantum field theory technique'},{w:'mantle convection',h:"Heat-driven flow in Earth's mantle"},{w:'holonomy',h:'Geometric phase in parallel transport'}],
+INSANE:[{w:'kerr metric',h:'Rotating black hole spacetime geometry'},{w:'bose einstein',h:'State of matter near absolute zero'},{w:'lagrangian',h:'Function describing system dynamics'},{w:'hamiltonians',h:'Operators representing total energy'},{w:'dirac equation',h:'Relativistic quantum mechanics equation'}]
+},
+History:{
+Easy:[{w:'napoleon',h:'French emperor who conquered Europe'},{w:'pyramid',h:'Ancient Egyptian royal tombs'},{w:'columbus',h:'Explorer who reached the Americas in 1492'},{w:'gladiator',h:'Roman arena fighter'},{w:'samurai',h:'Japanese feudal warrior'},{w:'viking',h:'Norse seafaring raider'},{w:'pharaoh',h:'Ancient Egyptian ruler'},{w:'crusade',h:'Medieval religious military campaign'},{w:'colosseum',h:'Ancient Roman amphitheatre'},{w:'guillotine',h:'French Revolution execution device'},{w:'renaissance',h:'14th to 17th century cultural rebirth'},{w:'gladius',h:'Short sword of the Roman legionary'},{w:'trebuchet',h:'Medieval siege weapon hurling stones'},{w:'armada',h:'Great Spanish naval fleet of 1588'},{w:'revolution',h:'Violent overthrow of a government'}],
+Medium:[{w:'ottoman',h:'Turkish empire that lasted 600 years'},{w:'reformation',h:"Luther's 16th century religious revolution"},{w:'conquistador',h:'Spanish soldiers who conquered the Americas'},{w:'inquisition',h:'Catholic institution that persecuted heretics'},{w:'apartheid',h:"South Africa's racial segregation system"},{w:'bolshevik',h:'Russian Marxist revolutionary party'},{w:'colonialism',h:'Extending control over other peoples'},{w:'feudalism',h:'Medieval system based on land ownership'},{w:'reconquista',h:'Christian recapture of the Iberian Peninsula'},{w:'anschluss',h:'Nazi annexation of Austria in 1938'},{w:'meiji',h:'Japanese era of rapid modernisation'},{w:'janissary',h:'Elite Ottoman infantry soldiers'},{w:'diaspora',h:'Dispersal of people from their homeland'},{w:'schism',h:'Christian church split of 1054'},{w:'magna carta',h:'1215 English charter limiting royal power'}],
+Hard:[{w:'peloponnesian',h:'War between Athens and Sparta'},{w:'hagiography',h:'Writing about the lives of saints'},{w:'numismatic',h:'Study and collection of coins'},{w:'eschatology',h:'Study of the end of the world'},{w:'palimpsest',h:'Manuscript reused after scraping off earlier text'},{w:'syncretic',h:'Merging different religious beliefs'},{w:'hegemony',h:'Dominance of one state over others'},{w:'serfdom',h:'Feudal system binding peasants to land'},{w:'dissolution',h:'Henry VIII closing English monasteries'},{w:'iconoclasm',h:'Destruction of religious images'},{w:'suzerainty',h:'Partial sovereignty over a vassal state'},{w:'interregnum',h:'Period between two successive reigns'},{w:'casus belli',h:'Act justifying declaration of war'},{w:'terra nullius',h:'Legal concept of uninhabited land'},{w:'irredentism',h:'Policy of reclaiming lost territory'}],
+INSANE:[{w:'defenestration',h:'Throwing someone out of a window'},{w:'quietism',h:'Mystical Christian passive movement'},{w:'heterodoxy',h:'Belief contrary to established doctrine'},{w:'nomocanon',h:'Byzantine ecclesiastical law collection'},{w:'pragmatica',h:'Royal Spanish succession decree'}]
+},
+Music:{
+Easy:[{w:'guitar',h:'Six-stringed instrument'},{w:'piano',h:'88-key keyboard instrument'},{w:'drums',h:'Percussion hit with sticks'},{w:'trumpet',h:'Brass wind instrument'},{w:'violin',h:'Bowed string instrument'},{w:'saxophone',h:'Reed woodwind instrument'},{w:'flute',h:'Woodwind you blow across'},{w:'melody',h:'The main tune of a song'},{w:'rhythm',h:'The beat pattern in music'},{w:'chorus',h:'Repeated section of a song'},{w:'tempo',h:'Speed of music in beats per minute'},{w:'harmony',h:'Notes sounding pleasantly together'},{w:'opera',h:'Dramatic singing performance'},{w:'jazz',h:'Improvised American music genre'},{w:'bass',h:'Low-pitched string or sound'}],
+Medium:[{w:'symphony',h:'Large orchestral composition'},{w:'concerto',h:'Solo instrument with orchestra'},{w:'arpeggio',h:'Broken chord played in sequence'},{w:'crescendo',h:'Gradually getting louder in music'},{w:'staccato',h:'Short detached musical notes'},{w:'vibrato',h:'Rapid pitch variation in singing'},{w:'cadenza',h:'Solo improvised passage in a concerto'},{w:'nocturne',h:'Dreamy night-inspired piano piece'},{w:'fugue',h:'Contrapuntal composition associated with Bach'},{w:'sonata',h:'Multi-movement instrumental composition'},{w:'libretto',h:'Text of an opera or musical'},{w:'overture',h:'Orchestral introduction to a work'},{w:'pentatonic',h:'Five-note musical scale'},{w:'counterpoint',h:'Multiple independent melodic lines'},{w:'serenade',h:'Romantic evening musical performance'}],
+Hard:[{w:'leitmotif',h:'Recurring musical theme for a character'},{w:'serialism',h:'12-tone composition technique'},{w:'microtonal',h:'Intervals smaller than a semitone'},{w:'polyrhythm',h:'Multiple simultaneous rhythms'},{w:'neoclassicism',h:'20th century return to classical forms'},{w:'spectralism',h:'Music based on sound spectrum analysis'},{w:'hemiola',h:'Three beats placed in space of two'},{w:'musique concrete',h:'Music composed from recorded sounds'},{w:'sprechgesang',h:'Half-speech half-song vocal technique'},{w:'enharmonic',h:'Same pitch different notation'},{w:'subdominant',h:'Fourth degree of a musical scale'},{w:'ostinato',h:'Persistently repeated musical phrase'},{w:'cantata',h:'Vocal composition with instruments'},{w:'passacaglia',h:'Variations over a repeated bass line'},{w:'klangfarbe',h:'Tonal colour of a musical sound'}],
+INSANE:[{w:'scordatura',h:'Abnormal string instrument tuning'},{w:'sforzando',h:'Sudden forced musical accent'},{w:'melisma',h:'Multiple notes on one syllable'},{w:'aleatoricism',h:'Chance-based music composition'},{w:'heterophony',h:'Simultaneous variations of the same melody'}]
+},
+Technology:{
+Easy:[{w:'internet',h:'Global computer network'},{w:'smartphone',h:'Touchscreen pocket computer'},{w:'computer',h:'Electronic data processing machine'},{w:'robot',h:'Automated mechanical machine'},{w:'satellite',h:'Object orbiting Earth from space'},{w:'battery',h:'Portable electricity storage'},{w:'software',h:'Programs running on a computer'},{w:'website',h:'Collection of web pages online'},{w:'keyboard',h:'Typing input device'},{w:'password',h:'Secret string for authentication'},{w:'bluetooth',h:'Short-range wireless technology'},{w:'processor',h:'The brain of a computer'},{w:'touchscreen',h:'Display you interact with by finger'},{w:'algorithm',h:'Step-by-step problem-solving instructions'},{w:'database',h:'Organised collection of stored data'}],
+Medium:[{w:'encryption',h:'Converting data into a secret code'},{w:'bandwidth',h:'Data transfer capacity of a connection'},{w:'firewall',h:'Network security barrier'},{w:'protocol',h:'Rules for computer communication'},{w:'compiler',h:'Translates code into machine language'},{w:'recursion',h:'Function that calls itself'},{w:'framework',h:'Reusable software structure'},{w:'blockchain',h:'Distributed ledger technology'},{w:'kubernetes',h:'Container orchestration system'},{w:'machine learning',h:'AI that improves from data'},{w:'open source',h:'Publicly available code'},{w:'latency',h:'Delay in data transmission'},{w:'cache',h:'Fast temporary data storage'},{w:'hypervisor',h:'Software managing virtual machines'},{w:'api',h:'Interface for software communication'}],
+Hard:[{w:'qubit',h:'Quantum computing basic unit'},{w:'sharding',h:'Splitting a database horizontally'},{w:'memoization',h:'Caching function results for speed'},{w:'idempotent',h:'Operation with same result if repeated'},{w:'polymorphism',h:'Object taking many forms in code'},{w:'heapsort',h:'Comparison-based sorting algorithm'},{w:'deadlock',h:'Processes waiting for each other forever'},{w:'semaphore',h:'Synchronisation signal in computing'},{w:'checksum',h:'Error-detecting data value'},{w:'abstraction',h:'Hiding complex implementation details'},{w:'refactoring',h:'Restructuring code without changing behaviour'},{w:'microservice',h:'Small independently deployable service'},{w:'websocket',h:'Full-duplex communication protocol'},{w:'load balancer',h:'Distributes traffic across servers'},{w:'quicksort',h:'Divide and conquer sort algorithm'}],
+INSANE:[{w:'eigenvector',h:'Linear transformation direction invariant'},{w:'backpropagation',h:'Neural network training algorithm'},{w:'byzantine fault',h:'Inconsistent failure in distributed systems'},{w:'monadic bind',h:'Functional programming composition operator'},{w:'kolmogorov',h:'Shortest description length of data'}]
+},
+Mythology:{
+Easy:[{w:'zeus',h:'Greek king of the gods'},{w:'thor',h:'Norse god of thunder'},{w:'athena',h:'Greek goddess of wisdom'},{w:'medusa',h:'Greek snake-haired gorgon'},{w:'hercules',h:'Greek hero of legendary strength'},{w:'poseidon',h:'Greek god of the sea'},{w:'apollo',h:'Greek god of sun and music'},{w:'odin',h:'Norse all-father god'},{w:'hades',h:'Greek god of the underworld'},{w:'cyclops',h:'One-eyed giant of Greek myth'},{w:'minotaur',h:'Half man half bull of the labyrinth'},{w:'phoenix',h:'Bird that rises from ashes'},{w:'dragon',h:'Fire-breathing mythical creature'},{w:'unicorn',h:'Horse with a single horn'},{w:'mermaid',h:'Half-human half-fish sea creature'}],
+Medium:[{w:'prometheus',h:'Titan who gave fire to humans'},{w:'persephone',h:'Greek queen of the underworld'},{w:'loki',h:'Norse trickster god'},{w:'anubis',h:'Egyptian god of the dead'},{w:'osiris',h:'Egyptian god of the afterlife'},{w:'achilles',h:'Greek hero with a vulnerable heel'},{w:'odysseus',h:'Cunning hero of the Odyssey'},{w:'dionysus',h:'Greek god of wine'},{w:'artemis',h:'Greek goddess of the hunt'},{w:'valkyrie',h:'Norse female choosers of the slain'},{w:'cerberus',h:'Three-headed guard dog of Hades'},{w:'chimera',h:'Fire-breathing hybrid Greek monster'},{w:'hydra',h:'Multi-headed regenerating Greek serpent'},{w:'narcissus',h:'Youth who fell in love with his reflection'},{w:'midas',h:'King whose touch turned things to gold'}],
+Hard:[{w:'ragnarok',h:'Norse apocalyptic end of the gods'},{w:'ouroboros',h:'Serpent eating its own tail'},{w:'yggdrasil',h:'Norse world tree'},{w:'quetzalcoatl',h:'Feathered serpent Aztec god'},{w:'gilgamesh',h:'Earliest known mythological hero'},{w:'enkidu',h:"Gilgamesh's wild companion"},{w:'tartarus',h:'Deepest abyss of the Greek underworld'},{w:'tantalus',h:'Punished Greek king in eternal torment'},{w:'sisyphus',h:'King condemned to roll a boulder forever'},{w:'anansi',h:'West African spider trickster god'},{w:'thunderbird',h:'Native American storm creature'},{w:'jormungandr',h:'Norse world-encircling serpent'},{w:'fenrir',h:'Giant wolf of Norse mythology'},{w:'mahabharata',h:'Ancient Indian epic mythology'},{w:'popol vuh',h:'Mayan creation mythology text'}],
+INSANE:[{w:'hesperides',h:'Nymphs guarding the golden apple tree'},{w:'nidhogg',h:'Dragon gnawing at Yggdrasil roots'},{w:'apotheosis',h:'Elevation of a human to divine status'},{w:'theogony',h:"Hesiod's account of the gods' origins"},{w:'syncretism',h:'Merging of different religious myths'}]
+}
+};
+
+// ══ DIFF CONFIG ══
+const DCFG={
+  Easy:{lives:12,insta:false,coins:1,timer:90,theme:'forest'},
+  Medium:{lives:9,insta:false,coins:2,timer:60,theme:'dungeon'},
+  Hard:{lives:6,insta:true,instaC:.08,coins:4,timer:45,theme:'volcano'},
+  INSANE:{lives:2,insta:true,instaC:.15,coins:6,timer:20,theme:'void'}
+};
+
+// ══ SKIN DEFINITIONS ══
+const SKIN_DEFS = {
+  classic: {
+    scaffoldColor: '#444',
+    bodyColor: '#e74c3c',
+    head: (c) => `<circle id="hm0" cx="130" cy="60" r="15" stroke="${c}" stroke-width="3" fill="none" display="none"/>`,
+    body: (c) => `<line id="hm1" x1="130" y1="75" x2="130" y2="120" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    lArm: (c) => `<line id="hm2" x1="130" y1="85" x2="108" y2="105" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    rArm: (c) => `<line id="hm3" x1="130" y1="85" x2="152" y2="105" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    lLeg: (c) => `<line id="hm4" x1="130" y1="120" x2="112" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    rLeg: (c) => `<line id="hm5" x1="130" y1="120" x2="148" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    lHand: (c) => `<line id="hm6" x1="108" y1="105" x2="100" y2="115" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    rHand: (c) => `<line id="hm7" x1="152" y1="105" x2="160" y2="115" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    lFoot: (c) => `<line id="hm8" x1="112" y1="148" x2="104" y2="155" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    rFoot: (c) => `<line id="hm9" x1="148" y1="148" x2="156" y2="155" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    eye1: (c) => `<circle id="hm10" cx="133" cy="59" r="2" fill="${c}" display="none"/>`,
+    mouth: (c) => `<line id="hm11" x1="124" y1="67" x2="136" y2="67" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+  },
+  bones: {
+    scaffoldColor: '#555',
+    bodyColor: '#bbb',
+    head: (c) => `<circle id="hm0" cx="130" cy="60" r="15" stroke="${c}" stroke-width="3" fill="rgba(200,200,200,0.08)" display="none"/>`,
+    body: (c) => `<line id="hm1" x1="130" y1="75" x2="130" y2="120" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
+    lArm: (c) => `<line id="hm2" x1="130" y1="85" x2="108" y2="108" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
+    rArm: (c) => `<line id="hm3" x1="130" y1="85" x2="152" y2="108" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
+    lLeg: (c) => `<line id="hm4" x1="130" y1="120" x2="110" y2="150" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
+    rLeg: (c) => `<line id="hm5" x1="130" y1="120" x2="150" y2="150" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
+    lHand: (c) => `<circle id="hm6" cx="106" cy="110" r="4" fill="${c}" display="none"/>`,
+    rHand: (c) => `<circle id="hm7" cx="154" cy="110" r="4" fill="${c}" display="none"/>`,
+    lFoot: (c) => `<circle id="hm8" cx="108" cy="154" r="4" fill="${c}" display="none"/>`,
+    rFoot: (c) => `<circle id="hm9" cx="152" cy="154" r="4" fill="${c}" display="none"/>`,
+    eye1: (c) => `<text id="hm10" x="122" y="64" font-size="10" fill="${c}" display="none">💀</text>`,
+    mouth: (c) => `<line id="hm11" x1="124" y1="68" x2="136" y2="64" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+  },
+  robot: {
+    scaffoldColor: '#445',
+    bodyColor: '#00e5ff',
+    head: (c) => `<rect id="hm0" x="115" y="45" width="30" height="28" rx="4" stroke="${c}" stroke-width="3" fill="rgba(0,229,255,0.08)" display="none"/>`,
+    body: (c) => `<rect id="hm1" x="118" y="75" width="24" height="40" rx="3" stroke="${c}" stroke-width="2" fill="rgba(0,229,255,0.06)" display="none"/>`,
+    lArm: (c) => `<line id="hm2" x1="118" y1="80" x2="102" y2="108" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    rArm: (c) => `<line id="hm3" x1="142" y1="80" x2="158" y2="108" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    lLeg: (c) => `<line id="hm4" x1="124" y1="115" x2="112" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    rLeg: (c) => `<line id="hm5" x1="136" y1="115" x2="148" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
+    lHand: (c) => `<rect id="hm6" x="96" y="108" width="10" height="8" rx="2" fill="${c}" display="none"/>`,
+    rHand: (c) => `<rect id="hm7" x="154" y="108" width="10" height="8" rx="2" fill="${c}" display="none"/>`,
+    lFoot: (c) => `<rect id="hm8" x="106" y="148" width="12" height="7" rx="2" fill="${c}" display="none"/>`,
+    rFoot: (c) => `<rect id="hm9" x="142" y="148" width="12" height="7" rx="2" fill="${c}" display="none"/>`,
+    eye1: (c) => `<rect id="hm10" x="120" y="52" width="6" height="6" rx="1" fill="${c}" display="none"/>`,
+    mouth: (c) => `<rect id="hm11" x="119" y="63" width="22" height="4" rx="2" fill="${c}" opacity="0.8" display="none"/>`,
+  },
+  ghost: {
+    scaffoldColor: '#446',
+    bodyColor: '#b0bec5',
+    head: (c) => `<ellipse id="hm0" cx="130" cy="62" rx="16" ry="18" stroke="${c}" stroke-width="2" fill="rgba(176,190,197,0.1)" display="none"/>`,
+    body: (c) => `<path id="hm1" d="M114 78 Q114 120 114 128 Q121 122 128 128 Q135 122 142 128 Q146 122 146 78 Z" stroke="${c}" stroke-width="2" fill="rgba(176,190,197,0.08)" display="none"/>`,
+    lArm: (c) => `<line id="hm2" x1="114" y1="88" x2="100" y2="100" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    rArm: (c) => `<line id="hm3" x1="146" y1="88" x2="160" y2="100" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    lLeg: (c) => `<line id="hm4" x1="120" y1="128" x2="114" y2="150" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    rLeg: (c) => `<line id="hm5" x1="140" y1="128" x2="146" y2="150" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+    lHand: (c) => `<circle id="hm6" cx="98" cy="103" r="4" fill="${c}" opacity="0.6" display="none"/>`,
+    rHand: (c) => `<circle id="hm7" cx="162" cy="103" r="4" fill="${c}" opacity="0.6" display="none"/>`,
+    lFoot: (c) => `<circle id="hm8" cx="112" cy="154" r="5" fill="${c}" opacity="0.5" display="none"/>`,
+    rFoot: (c) => `<circle id="hm9" cx="148" cy="154" r="5" fill="${c}" opacity="0.5" display="none"/>`,
+    eye1: (c) => `<ellipse id="hm10" cx="124" cy="60" rx="4" ry="5" fill="${c}" display="none"/>`,
+    mouth: (c) => `<path id="hm11" d="M122 70 Q127 76 130 70 Q133 76 138 70" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round" display="none"/>`,
+  },
+  dragon: {
+    scaffoldColor: '#543',
+    bodyColor: '#ff6f00',
+    head: (c) => `<polygon id="hm0" points="130,42 148,58 148,72 130,78 112,72 112,58" stroke="${c}" stroke-width="2" fill="rgba(255,111,0,0.12)" display="none"/>`,
+    body: (c) => `<line id="hm1" x1="130" y1="78" x2="130" y2="125" stroke="${c}" stroke-width="4" stroke-linecap="round" display="none"/>`,
+    lArm: (c) => `<path id="hm2" d="M130 88 L106 100 L100 112" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
+    rArm: (c) => `<path id="hm3" d="M130 88 L154 100 L160 112" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
+    lLeg: (c) => `<path id="hm4" d="M128 125 L110 145 L104 158" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
+    rLeg: (c) => `<path id="hm5" d="M132 125 L150 145 L156 158" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
+    lHand: (c) => `<polygon id="hm6" points="98,112 94,118 104,116" fill="${c}" display="none"/>`,
+    rHand: (c) => `<polygon id="hm7" points="162,112 166,118 156,116" fill="${c}" display="none"/>`,
+    lFoot: (c) => `<polygon id="hm8" points="102,158 96,164 110,162" fill="${c}" display="none"/>`,
+    rFoot: (c) => `<polygon id="hm9" points="158,158 164,164 150,162" fill="${c}" display="none"/>`,
+    eye1: (c) => `<polygon id="hm10" points="122,55 126,50 130,55 126,60" fill="${c}" display="none"/>`,
+    mouth: (c) => `<path id="hm11" d="M118 70 L126 66 L130 70 L134 66 L142 70" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round" display="none"/>`,
+  }
+};
+
+// Skin body colour overrides per theme
+const THEME_SKIN_COLORS = {
+  default: '#e74c3c', forest: '#4caf50', dungeon: '#9c6dff',
+  volcano: '#ff6b35', void: '#e040fb', ocean: '#00b4d8',
+  neon: '#ff00ff', gold: '#ffd700', blood: '#ff1744',
+  ice: '#80deea', cosmic: '#c770ff'
+};
+
+function getSkinColor(){
+  const eq = getEq();
+  const theme = eq.theme || (cfg && cfg.theme) || 'default';
+  return THEME_SKIN_COLORS[theme] || '#e74c3c';
+}
+
+function rebuildHangmanSVG(){
+  const eq = getEq();
+  const skinId = eq.skin || 'classic';
+  const skin = SKIN_DEFS[skinId] || SKIN_DEFS.classic;
+  const c = getSkinColor();
+  const svg = document.getElementById('hm-svg');
+  if(!svg) return;
+
+  // Keep scaffold lines (first 4 children), replace rest
+  const scaffoldColor = skin.scaffoldColor || '#444';
+  // Update scaffold colour
+  Array.from(svg.querySelectorAll('line, circle, rect, ellipse, polygon, path, text')).forEach(el => {
+    if(!el.id || !el.id.startsWith('hm')) {
+      el.setAttribute('stroke', scaffoldColor);
+    }
+  });
+
+  // Rebuild body parts
+  const parts = ['head','body','lArm','rArm','lLeg','rLeg','lHand','rHand','lFoot','rFoot','eye1','mouth'];
+  // Remove old hm* elements
+  svg.querySelectorAll('[id^="hm"]').forEach(el => el.remove());
+
+  // Re-insert all parts
+  parts.forEach(part => {
+    if(skin[part]){
+      svg.insertAdjacentHTML('beforeend', skin[part](c));
+    }
+  });
+}
+
+const HMP=['hm0','hm1','hm2','hm3','hm4','hm5','hm6','hm7','hm8','hm9','hm10','hm11'];
+
+// ══ COSMETICS ══
+const THEMES_SHOP=[
+  {id:'ocean',name:'Ocean Depths',icon:'🌊',price:8},
+  {id:'neon',name:'Neon Cyber',icon:'🔮',price:10},
+  {id:'gold',name:'Golden Age',icon:'✨',price:12},
+  {id:'blood',name:'Blood Moon',icon:'🩸',price:15},
+  {id:'ice',name:'Frozen Tundra',icon:'❄️',price:10},
+  {id:'cosmic',name:'Cosmic Void',icon:'🌌',price:20}
+];
+const SKINS_SHOP=[
+  {id:'classic',name:'Classic',icon:'🖊️',price:0,free:true},
+  {id:'bones',name:'Skeleton',icon:'💀',price:5},
+  {id:'robot',name:'Robot',icon:'🤖',price:8},
+  {id:'ghost',name:'Ghost',icon:'👻',price:10},
+  {id:'dragon',name:'Dragon',icon:'🐉',price:18}
+];
+
+// ══ STATE ══
+let nickname='',diff='',cfg={};
+let gameMode='classic';
+let gameCats=[],wordIdx=0;
+let curWord='',curHint='',curCat='';
+let guessed=new Set(),wrongCount=0,maxLives=0;
+let coins=0,sessCoins=0,wordsDone=0;
+let alive=true,submitted=false,streak=0,mechanic='normal',wStart=0;
+let timerInt=null,timeLeft=0;
+let taInt=null,taLeft=120,taWords=0,taCoins=0;
+let lbTab='all';
+// MP
+let peer=null,mpConns=[],mpHost=false,myPid='',mpPeers={},mpRound=0,mpScores={},mpSolved=false;
+
+// ══ UTILS ══
+function ss(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function toast(m,d=2400){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',d);}
+function shuf(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function getPB(d){return parseInt(localStorage.getItem('sots_pb_'+d)||'0');}
+function setPB(d,v){localStorage.setItem('sots_pb_'+d,v);}
+function getOwned(){try{return JSON.parse(localStorage.getItem('sots_owned')||'["classic"]');}catch{return['classic'];}}
+function setOwned(a){localStorage.setItem('sots_owned',JSON.stringify(a));}
+function getEq(){try{return JSON.parse(localStorage.getItem('sots_eq')||'{}');}catch{return{};}}
+function setEq(o){localStorage.setItem('sots_eq',JSON.stringify(o));}
+function todayKey(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+function dailyDone(){return localStorage.getItem('sots_daily')===todayKey();}
+function setDailyDone(){localStorage.setItem('sots_daily',todayKey());}
+function seededRand(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+
+function applyEquippedTheme(){
+  const eq=getEq();
+  if(eq.theme) document.body.className='th-'+eq.theme;
+}
+function loadPB(){
+  applyEquippedTheme();
+  ['Easy','Medium','Hard','INSANE'].forEach(d=>{
+    const pb=getPB(d),el=document.getElementById('pb-'+d.toLowerCase());
+    if(el)el.textContent=pb>0?pb+'🪙':'—';
+  });
+  const c=parseInt(localStorage.getItem('sots_coins')||'0');
+  const hc=document.getElementById('home-coins');if(hc)hc.textContent=c;
+}
+
+function updateDailyBadge(){
+  const el=document.getElementById('daily-home');if(!el)return;
+  if(dailyDone()){el.className='daily-badge daily-done';el.textContent='✅ Daily complete! Come back tomorrow.';}
+  else{el.className='daily-badge';el.textContent='📅 Today\'s challenge is live! Can you survive?';}
+}
+
+// ══ LEADERBOARD ══
+async function loadLb(filter='all'){
+  const tb=document.getElementById('lb-body');if(!tb)return;
+  tb.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.3;padding:12px">Loading...</td></tr>';
+  let q=SB.from('leaderboard').select('*').order('coins',{ascending:false}).limit(5);
+  if(filter==='Daily')q=SB.from('leaderboard').select('*').eq('difficulty','Daily').order('coins',{ascending:false}).limit(5);
+  else if(filter==='TimeAttack')q=SB.from('leaderboard').select('*').eq('difficulty','TimeAttack').order('coins',{ascending:false}).limit(5);
+  else if(filter!=='all')q=q.eq('difficulty',filter);
+  const{data,error}=await q;
+  if(error||!data?.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.3;padding:12px">No scores yet!</td></tr>';return;}
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  tb.innerHTML=data.map((r,i)=>`<tr><td>${medals[i]||i+1}</td><td><b>${r.nickname}</b></td><td><b>${r.coins}🪙</b></td><td><span class="diff-tag ${r.difficulty}">${r.difficulty}</span></td><td style="opacity:.38;font-size:.65rem">${new Date(r.created_at).toLocaleDateString()}</td></tr>`).join('');
+}
+function swLb(f,btn){lbTab=f;document.querySelectorAll('.lb-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadLb(f);}
+
+// ══ MODE FLOW ══
+function goMode(){
+  const n=document.getElementById('player-nick').value.trim();
+  if(!n){toast('Enter your nickname!');return;}
+  nickname=n;ss('s-mode');
+}
+
+function pickMode(mode){
+  gameMode=mode;
+  if(mode==='daily'){if(dailyDone()){toast('Already done today! See you tomorrow 📅');return;}startGame('Medium');return;}
+  if(mode==='multiplayer'){ss('s-mp-setup');return;}
+  if(mode==='timeattack'||mode==='suddendeath'){ss('s-diff');return;}
+  ss('s-diff');
+}
+
+// ══ START GAME ══
+function startGame(d){
+  diff=d;cfg=DCFG[d]||DCFG.Medium;
+  coins=parseInt(localStorage.getItem('sots_coins')||'0');
+  sessCoins=0;wordsDone=0;alive=true;submitted=false;streak=0;mpSolved=false;
+
+  // Theme
+  const eq=getEq();
+  document.body.className='th-'+(eq.theme||cfg.theme);
+  rebuildHangmanSVG();
+
+  // Build word set
+  if(gameMode==='daily'){
+    const seed=parseInt(todayKey().replace(/-/g,''));
+    const rng=seededRand(seed||20240101);
+    gameCats=shuf(CATS).slice(0,4).map(cat=>{
+      const pool=WB[cat]?.Medium||[];
+      return{cat,word:pool[Math.floor(rng()*pool.length)].w,hint:pool[Math.floor(rng()*pool.length)].h};
+    });
+  } else {
+    gameCats=shuf(CATS).slice(0,4).map(cat=>{
+      const pool=WB[cat]?.[d]||WB[cat]?.Hard||[];
+      const e=shuf(pool)[0];return{cat,word:e.w,hint:e.h};
+    });
+  }
+
+  wordIdx=0;
+  const modeLabels={classic:'☠️ Classic Mode',timeattack:'⏱️ Time Attack',suddendeath:'💀 Sudden Death',daily:'📅 Daily Challenge',multiplayer:'👥 Race Mode'};
+  document.getElementById('mode-ind').textContent=modeLabels[gameMode]||'Classic Mode';
+  document.getElementById('ta-hud').style.display=gameMode==='timeattack'?'flex':'none';
+  document.getElementById('normal-timer-wrap').style.display=gameMode==='timeattack'?'none':'block';
+  document.getElementById('mp-race-grid').style.display=gameMode==='multiplayer'?'flex':'none';
+  document.getElementById('lives-wrap-el').style.display=gameMode==='suddendeath'?'none':'block';
+
+  if(gameMode==='timeattack'){
+    taLeft=120;taWords=0;taCoins=0;
+    document.getElementById('ta-time').textContent=120;
+    document.getElementById('ta-words').textContent=0;
+    document.getElementById('ta-coins').textContent=0;
+    clearInterval(taInt);
+    taInt=setInterval(()=>{
+      taLeft--;document.getElementById('ta-time').textContent=taLeft;
+      if(taLeft<=10)snd('tick');
+      if(taLeft<=0){clearInterval(taInt);endTimeAttack();}
+    },1000);
+  }
+  ss('s-game');loadWord();
+}
+
+// ══ LOAD WORD ══
+function getMechanic(){
+  if(gameMode==='suddendeath')return 'normal';
+  if(diff==='INSANE')return Math.random()<.4?'partial':'normal';
+  if(diff==='Hard')return Math.random()<.25?'fill':Math.random()<.2?'partial':'normal';
+  if(diff==='Medium')return Math.random()<.12?'fill':'normal';
+  return 'normal';
+}
+
+function loadWord(){
+  clearInterval(timerInt);
+  if(wordIdx>=gameCats.length){
+    if(gameMode==='timeattack'){
+      const cat=shuf(CATS)[0],pool=WB[cat]?.[diff]||WB[cat]?.Hard||[];
+      gameCats.push({cat,word:shuf(pool)[0].w,hint:shuf(pool)[0].h});
+    } else {showEndGame(true);return;}
+  }
+  const e=gameCats[wordIdx];
+  curWord=e.word;curHint=e.hint;curCat=e.cat;
+  guessed=new Set();wrongCount=0;maxLives=cfg.lives;wStart=Date.now();
+  rebuildHangmanSVG();
+  mechanic=getMechanic();
+
+  if(mechanic==='partial'){guessed.add(curWord[0]);guessed.add(curWord[curWord.length-1]);}
+  if(mechanic==='fill'){
+    const u=[...new Set(curWord.replace(/ /g,''))];
+    shuf(u).slice(0,Math.max(1,Math.floor(u.length*.3))).forEach(ch=>guessed.add(ch));
+  }
+
+  document.getElementById('cat-badge').textContent='📂 '+curCat;
+  document.getElementById('wprog').textContent=gameMode==='timeattack'?`Word ${taWords+1}`:`${wordIdx+1}/4`;
+  document.getElementById('coin-count').textContent=coins;
+  document.getElementById('hint-box').textContent=curHint;
+
+  const mbw=document.getElementById('mech-badge-wrap');
+  mbw.innerHTML=mechanic==='partial'?'<span class="mech-badge mech-partial">🔮 Partial Reveal — first & last letter shown</span>':
+    mechanic==='fill'?'<span class="mech-badge mech-fill">🧩 Fill the Blank — some letters revealed</span>':'';
+
+  const sb2=document.getElementById('streak-bar');
+  if(streak>=2){sb2.style.display='flex';document.getElementById('streak-lbl').textContent=streak+' win streak!';
+    const b=streakBonus(streak+1);document.getElementById('streak-pill').textContent=b>0?'+'+b+'🪙 bonus next win':'';}
+  else sb2.style.display='none';
+
+  HMP.forEach(id=>document.getElementById(id).setAttribute('display','none'));
+  renderLives();renderWord();renderKB();updatePUs();
+  if(gameMode!=='timeattack')startTimer();
+  if(gameMode==='multiplayer'){mpSolved=false;renderRaceGrid();}
+}
+
+// ══ TIMER ══
+function startTimer(){
+  if(gameMode==='suddendeath'){clearInterval(timerInt);return;}
+  timeLeft=cfg.timer;updTimer();
+  timerInt=setInterval(()=>{
+    timeLeft--;updTimer();
+    if(timeLeft<=5)snd('tick');
+    if(timeLeft<=0){clearInterval(timerInt);snd('death');alive=false;streak=0;showResult(false,0,'⏱️ Time\'s up!');}
+  },1000);
+}
+function updTimer(){
+  const pct=(timeLeft/cfg.timer)*100;
+  const bar=document.getElementById('timer-bar');if(!bar)return;
+  bar.style.width=pct+'%';bar.className='timer-bar '+(pct>50?'t-safe':pct>25?'t-warn':'t-danger');
+  const lbl=document.getElementById('timer-lbl');if(lbl)lbl.textContent='⏱ '+timeLeft+'s';
+}
+function streakBonus(s){if(s>=4)return 3;if(s>=2)return 1;return 0;}
+
+// ══ RENDER ══
+function renderLives(){
+  if(gameMode==='suddendeath')return;
+  const wrap=document.getElementById('lives-dots');wrap.innerHTML='';
+  for(let i=0;i<maxLives;i++){const d=document.createElement('div');d.className='life-dot'+(i<wrongCount?' lost':'');wrap.appendChild(d);}
+}
+function renderWord(){
+  const wrap=document.getElementById('word-display');wrap.innerHTML='';
+  for(const ch of curWord){
+    const b=document.createElement('div');
+    if(ch===' '){b.className='lb space';}
+    else if(guessed.has(ch)){b.className='lb '+(mechanic==='fill'?'fill':'revealed');b.textContent=ch.toUpperCase();}
+    else b.className='lb';
+    wrap.appendChild(b);
+  }
+}
+function renderKB(){
+  const wrap=document.getElementById('keyboard');wrap.innerHTML='';
+  for(let i=65;i<=90;i++){
+    const ch=String.fromCharCode(i).toLowerCase();
+    const btn=document.createElement('button');btn.className='key-btn';btn.textContent=String.fromCharCode(i);btn.id='key-'+ch;
+    if(guessed.has(ch)){btn.classList.add(curWord.includes(ch)?'correct':'wrong');btn.disabled=true;}
+    btn.addEventListener('click',()=>guess(ch));wrap.appendChild(btn);
+  }
+}
+function updHM(){
+  const step=HMP.length/maxLives,show=Math.floor(wrongCount*step);
+  HMP.forEach((id,i)=>document.getElementById(id).setAttribute('display',i<show?'block':'none'));
+}
+function updatePUs(){
+  document.getElementById('pu-reveal').disabled=coins<1;
+  document.getElementById('pu-life').disabled=coins<2||gameMode==='suddendeath';
+  document.getElementById('pu-skip').disabled=coins<3;
+}
+
+// ══ GUESS ══
+function guess(ch){
+  if(guessed.has(ch)||!alive)return;
+  guessed.add(ch);
+  const btn=document.getElementById('key-'+ch);
+  if(curWord.includes(ch)){
+    snd('correct');if(btn){btn.classList.add('correct');btn.disabled=true;}
+    renderWord();checkSolved();
+  } else {
+    snd('wrong');if(btn){btn.classList.add('wrong');btn.disabled=true;}
+    if(gameMode==='suddendeath'){clearInterval(timerInt);snd('death');alive=false;streak=0;showResult(false,0,'💀 Sudden Death!');return;}
+    if(cfg.insta&&Math.random()<cfg.instaC){triggerInstaDeath();return;}
+    wrongCount++;updHM();renderLives();
+    if(wrongCount>=maxLives){clearInterval(timerInt);snd('death');alive=false;streak=0;showResult(false,0,'');}
+  }
+  updatePUs();
+}
+
+function checkSolved(){
+  const u=[...new Set(curWord.replace(/ /g,''))];
+  if(!u.every(ch=>guessed.has(ch)))return;
+  clearInterval(timerInt);snd('win');
+  const t=Math.round((Date.now()-wStart)/1000);
+  streak++;const bonus=streakBonus(streak),earned=cfg.coins+bonus;
+  coins+=earned;sessCoins+=earned;wordsDone++;
+  localStorage.setItem('sots_coins',coins);
+  if(streak>=2)snd('streak');
+  if(gameMode==='timeattack'){taWords++;taCoins+=earned;document.getElementById('ta-words').textContent=taWords;document.getElementById('ta-coins').textContent=taCoins;}
+  if(gameMode==='multiplayer'&&!mpSolved){mpSolved=true;mpBroadcastSolve(earned,t);}
+  const sm=bonus>0?`🔥 ${streak} streak! +${bonus}🪙`:streak>=2?`🔥 ${streak} win streak!`:'';
+  showResult(true,earned,sm,t);
+}
+
+// ══ INSTA DEATH ══
+function triggerInstaDeath(){
+  clearInterval(timerInt);alive=false;streak=0;snd('death');
+  document.getElementById('id-word').textContent='The word was: '+curWord.toUpperCase();
+  document.getElementById('id-ov').classList.add('show');
+  setTimeout(()=>{document.getElementById('id-ov').classList.remove('show');showEndGame(false);},3500);
+}
+
+// ══ ROUND RESULT ══
+function showResult(won,earned,msg='',timeTaken=0){
+  document.getElementById('res-icon').textContent=won?'✅':'💀';
+  document.getElementById('res-title').textContent=won?'Word Solved!':'You Died!';
+  document.getElementById('res-word-el').textContent=curWord.toUpperCase();
+  document.getElementById('res-coins').textContent=won?`+${earned} 🪙`:'No coins this round';
+  const sm=document.getElementById('res-streak');
+  if(msg){sm.textContent=msg;sm.style.display='block';}else sm.style.display='none';
+  document.getElementById('res-time').textContent=won&&timeTaken?`Solved in ${timeTaken}s`:'';
+  // MP scores
+  const mp=document.getElementById('res-mp');
+  if(gameMode==='multiplayer'&&Object.keys(mpScores).length){
+    mp.style.display='block';
+    const sorted=Object.entries(mpScores).sort((a,b)=>b[1]-a[1]);
+    mp.innerHTML='<div style="font-weight:700;margin-bottom:4px;opacity:.5;font-size:.68rem;text-transform:uppercase">Race Scores</div>'+
+      sorted.map(([pid,sc])=>`<div class="mp-row${pid===myPid?' me':''}"><span>${mpPeers[pid]?.name||'?'}</span><span>${sc}🪙</span></div>`).join('');
+  } else mp.style.display='none';
+
+  const nextBtn=document.getElementById('res-next');
+  if(!won){
+    if(gameMode==='timeattack'){nextBtn.textContent='Next ➡️';nextBtn.onclick=()=>{document.getElementById('res-ov').classList.remove('show');wordIdx++;loadWord();};}
+    else{nextBtn.textContent='💀 Game Over';nextBtn.onclick=()=>{document.getElementById('res-ov').classList.remove('show');showEndGame(false);};}
+  } else if(gameMode==='timeattack'){
+    nextBtn.textContent='Next ➡️';nextBtn.onclick=()=>{document.getElementById('res-ov').classList.remove('show');wordIdx++;loadWord();};
+  } else if(wordIdx>=3){
+    nextBtn.textContent='🏆 See Results';nextBtn.onclick=()=>{document.getElementById('res-ov').classList.remove('show');showEndGame(true);};
+  } else {
+    nextBtn.textContent='Next Word ➡️';nextBtn.onclick=()=>{document.getElementById('res-ov').classList.remove('show');nextWord();};
+  }
+  document.getElementById('res-ov').classList.add('show');
+}
+function nextWord(){if(!alive)return;wordIdx++;if(wordIdx>=4)showEndGame(true);else loadWord();}
+
+// ══ TIME ATTACK END ══
+function endTimeAttack(){
+  clearInterval(timerInt);alive=false;sessCoins=taCoins;
+  document.getElementById('end-icon').textContent='⏱️';
+  const t=document.getElementById('end-title');t.textContent='Time\'s Up!';t.className='end-title win';
+  document.getElementById('end-stats').innerHTML=`Mode: <b>⏱️ Time Attack</b><br/>Difficulty: <b>${diff}</b><br/>Words solved: <b>${taWords}</b><br/>Coins earned: <b>${taCoins}🪙</b>`;
+  document.getElementById('end-coins').textContent=`Total coins: ${coins}🪙`;
+  document.getElementById('pb-banner').style.display='none';
+  document.getElementById('end-ov').classList.add('show');
+}
+
+// ══ POWER-UPS ══
+function useReveal(){
+  if(coins<1){toast('Not enough coins!');return;}
+  const h=[...curWord].filter(c=>c!==' '&&!guessed.has(c));
+  if(!h.length){toast('No letters to reveal!');return;}
+  const ch=h[~~(Math.random()*h.length)];
+  coins--;localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;
+  guessed.add(ch);const btn=document.getElementById('key-'+ch);
+  if(btn){btn.classList.add('correct');btn.disabled=true;}
+  renderWord();updatePUs();checkSolved();
+}
+function useExtraLife(){
+  if(coins<2){toast('Not enough coins!');return;}
+  if(wrongCount===0){toast('No lost lives!');return;}
+  coins-=2;wrongCount=Math.max(0,wrongCount-1);
+  localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;
+  renderLives();updHM();updatePUs();toast('💚 Life restored!');
+}
+function useSkip(){
+  if(coins<3){toast('Not enough coins!');return;}
+  coins-=3;clearInterval(timerInt);
+  localStorage.setItem('sots_coins',coins);
+  document.getElementById('coin-count').textContent=coins;updatePUs();streak=0;
+  toast('🟠 Word skipped!');showResult(false,0,'');
+}
+
+// ══ END GAME ══
+function showEndGame(won){
+  clearInterval(timerInt);clearInterval(taInt);
+  const ml={classic:'Classic',timeattack:'Time Attack',suddendeath:'Sudden Death',daily:'Daily Challenge',multiplayer:'Multiplayer'}[gameMode]||gameMode;
+  document.getElementById('end-icon').textContent=won?'🏆':'☠️';
+  const t=document.getElementById('end-title');
+  t.textContent=won?'You Survived!':'You Perished!';t.className='end-title '+(won?'win':'lose');
+  document.getElementById('end-stats').innerHTML=`Mode: <b>${ml}</b><br/>Difficulty: <b>${diff}</b><br/>Words completed: <b>${wordsDone}/4</b><br/>Coins this run: <b>${sessCoins}🪙</b><br/>Best streak: <b>${streak>0?streak+' 🔥':'—'}</b>`;
+  document.getElementById('end-coins').textContent=`Total coins: ${coins}🪙`;
+  const pb=getPB(diff),pbb=document.getElementById('pb-banner');
+  if(sessCoins>pb&&sessCoins>0){setPB(diff,sessCoins);pbb.style.display='block';pbb.textContent=`🏆 New Personal Best! ${sessCoins}🪙`;loadPB();}
+  else pbb.style.display='none';
+  if(gameMode==='daily')setDailyDone();
+  document.getElementById('end-ov').classList.add('show');
+}
+async function submitScore(){
+  if(submitted){toast('Already submitted!');return;}
+  if(sessCoins===0){toast('No coins to submit!');return;}
+  const dl={classic:diff,timeattack:'TimeAttack',suddendeath:'SuddenDeath',daily:'Daily',multiplayer:'Multiplayer'}[gameMode]||diff;
+  const{error}=await SB.from('leaderboard').insert({nickname,coins:sessCoins,difficulty:dl,words_completed:wordsDone});
+  if(error){toast('Error submitting');console.error(error);return;}
+  submitted=true;toast('✅ Score submitted!');loadLb(lbTab);
+}
+function restartGame(){document.getElementById('end-ov').classList.remove('show');startGame(diff);}
+function goHome(){
+  clearInterval(timerInt);clearInterval(taInt);
+  document.getElementById('end-ov').classList.remove('show');
+  document.body.className='th-default';
+  loadLb(lbTab);loadPB();updateDailyBadge();ss('s-home');
+}
+
+// ══ SHOP ══
+function openShop(){renderShop();ss('s-shop');}
+function swShop(tab,btn){
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('shop-themes').style.display=tab==='themes'?'grid':'none';
+  document.getElementById('shop-skins').style.display=tab==='skins'?'grid':'none';
+}
+function renderShop(){
+  const c=parseInt(localStorage.getItem('sots_coins')||'0');
+  document.getElementById('shop-coins-disp').textContent=c+'🪙';
+  const owned=getOwned(),eq=getEq();
+  // Themes
+  const tg=document.getElementById('shop-themes');tg.innerHTML='';
+  THEMES_SHOP.forEach(item=>{
+    const isOwned=owned.includes(item.id),isEq=eq.theme===item.id;
+    const div=document.createElement('div');
+    div.className='shop-item'+(isEq?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<div class="shop-icon">${item.icon}</div><div class="shop-name">${item.name}</div><div class="shop-price">${isOwned?'':'🪙 '+item.price}</div><div class="shop-status ${isEq?'e':isOwned?'o':''}">${isEq?'✅ Equipped':isOwned?'Tap to equip':'Tap to buy'}</div>`;
+    div.onclick=()=>{
+      if(isEq){const e2=getEq();delete e2.theme;setEq(e2);document.body.className='th-default';toast('Theme removed');rebuildHangmanSVG();renderShop();}
+      else if(isOwned){const e2=getEq();e2.theme=item.id;setEq(e2);document.body.className='th-'+item.id;toast('Theme equipped! ✨');rebuildHangmanSVG();renderShop();}
+      else{
+        const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+        if(cur<item.price){toast('Not enough coins!');return;}
+        localStorage.setItem('sots_coins',cur-item.price);
+        const o2=getOwned();o2.push(item.id);setOwned(o2);
+        const e2=getEq();e2.theme=item.id;setEq(e2);
+        toast('🎨 Theme unlocked!');renderShop();loadPB();
+      }
+    };tg.appendChild(div);
+  });
+  // Skins
+  const sg=document.getElementById('shop-skins');sg.innerHTML='';
+  SKINS_SHOP.forEach(item=>{
+    const key='skin_'+item.id;
+    const isOwned=item.free||owned.includes(key),isEq=eq.skin===item.id;
+    const div=document.createElement('div');
+    div.className='shop-item'+(isEq?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<div class="shop-icon">${item.icon}</div><div class="shop-name">${item.name}</div><div class="shop-price">${item.free?'FREE':isOwned?'':('🪙 '+item.price)}</div><div class="shop-status ${isEq?'e':isOwned?'o':''}">${isEq?'✅ Equipped':isOwned?'Tap to equip':'Tap to buy'}</div>`;
+    div.onclick=()=>{
+      if(isEq){const e2=getEq();delete e2.skin;setEq(e2);toast('Skin removed');rebuildHangmanSVG();renderShop();}
+      else if(isOwned){const e2=getEq();e2.skin=item.id;setEq(e2);toast('Skin equipped!');rebuildHangmanSVG();renderShop();}
+      else{
+        const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+        if(cur<item.price){toast('Not enough coins!');return;}
+        localStorage.setItem('sots_coins',cur-item.price);
+        const o2=getOwned();o2.push(key);setOwned(o2);
+        const e2=getEq();e2.skin=item.id;setEq(e2);
+        toast('💀 Skin unlocked!');renderShop();loadPB();
+      }
+    };sg.appendChild(div);
+  });
+}
+
+// ══ MULTIPLAYER ══
+function mpCreate(){
+  const n=document.getElementById('player-nick').value.trim();
+  if(!n){toast('Enter your name first!');return;}
+  nickname=n;
+  if(typeof Peer==='undefined'){toast('Connection library not loaded. Try refreshing!');return;}
+  peer=new Peer();
+  peer.on('open',id=>{
+    myPid=id;mpHost=true;mpConns=[];mpPeers={};mpScores={};
+    mpPeers[id]={name:n,id};mpScores[id]=0;
+    document.getElementById('mp-room-code').textContent=id.slice(-6).toUpperCase();
+    document.getElementById('mp-start-btn').style.display='block';
+    ss('s-mp-lobby');mpRenderLobby();
+  });
+  peer.on('error',e=>toast('Connection error: '+e.type));
+  peer.on('connection',conn=>{
+    conn.on('open',()=>{
+      mpConns.push(conn);
+      conn.on('data',d=>mpHandle(d,conn));
+      conn.send({type:'init',peers:mpPeers,scores:mpScores});
+      mpBroadcast({type:'peers',peers:mpPeers,scores:mpScores});
+      mpRenderLobby();
+    });
+    conn.on('close',()=>{mpConns=mpConns.filter(c=>c!==conn);mpRenderLobby();});
+  });
+}
+function mpJoin(){
+  const code=document.getElementById('mp-code-in').value.trim();
+  const n=document.getElementById('player-nick').value.trim();
+  if(!n){toast('Enter your name first!');return;}
+  if(!code){toast('Enter a room code!');return;}
+  nickname=n;
+  if(typeof Peer==='undefined'){toast('Connection library not loaded. Try refreshing!');return;}
+  peer=new Peer();
+  peer.on('open',id=>{
+    myPid=id;mpHost=false;mpPeers={};mpScores={};
+    // Try to find the full peer ID by the 6-char suffix
+    const fullId=code.toLowerCase();
+    const conn=peer.connect(fullId,{reliable:true});
+    conn.on('open',()=>{
+      mpConns=[conn];
+      conn.on('data',d=>mpHandle(d,conn));
+      conn.send({type:'join',id:myPid,name:n});
+      ss('s-mp-lobby');
+    });
+    conn.on('error',()=>toast('Could not connect! Check the code.'));
+  });
+  peer.on('error',()=>toast('Could not connect! Check the code.'));
+}
+function mpHandle(data,conn){
+  if(data.type==='join'){
+    mpPeers[data.id]={name:data.name,id:data.id};mpScores[data.id]=0;
+    mpBroadcast({type:'peers',peers:mpPeers,scores:mpScores});mpRenderLobby();
+  } else if(data.type==='init'||data.type==='peers'){
+    mpPeers=data.peers;if(data.scores)mpScores=data.scores;mpRenderLobby();
+  } else if(data.type==='start'){
+    gameCats=data.words;gameMode='multiplayer';diff=data.diff;cfg=DCFG[diff];
+    coins=parseInt(localStorage.getItem('sots_coins')||'0');
+    sessCoins=0;wordsDone=0;alive=true;submitted=false;streak=0;mpSolved=false;
+    document.body.className='th-'+cfg.theme;wordIdx=0;
+    document.getElementById('mode-ind').textContent='👥 Race Mode';
+    document.getElementById('ta-hud').style.display='none';
+    document.getElementById('normal-timer-wrap').style.display='block';
+    document.getElementById('mp-race-grid').style.display='flex';
+    document.getElementById('lives-wrap-el').style.display='block';
+    ss('s-game');loadWord();
+  } else if(data.type==='solved'){
+    mpScores[data.id]=(mpScores[data.id]||0)+data.coins;renderRaceGrid();
+  }
+}
+function mpBroadcast(d){mpConns.forEach(c=>{try{c.send(d);}catch(e){}});}
+function mpSend(d){if(mpHost)mpBroadcast(d);else mpConns.forEach(c=>{try{c.send(d);}catch(e){}});}
+function mpBroadcastSolve(earned,t){
+  mpScores[myPid]=(mpScores[myPid]||0)+earned;
+  mpSend({type:'solved',id:myPid,coins:earned,time:t});renderRaceGrid();
+}
+function mpStartGame(){
+  if(!mpHost)return;
+  const cats=shuf(CATS).slice(0,4).map(cat=>{const pool=WB[cat]?.Medium||[];const e=shuf(pool)[0];return{cat,word:e.w,hint:e.h};});
+  mpBroadcast({type:'start',words:cats,diff:'Medium'});
+  gameCats=cats;gameMode='multiplayer';diff='Medium';cfg=DCFG['Medium'];
+  coins=parseInt(localStorage.getItem('sots_coins')||'0');sessCoins=0;wordsDone=0;alive=true;submitted=false;streak=0;mpSolved=false;
+  document.body.className='th-dungeon';wordIdx=0;
+  document.getElementById('mode-ind').textContent='👥 Race Mode';
+  document.getElementById('ta-hud').style.display='none';
+  document.getElementById('normal-timer-wrap').style.display='block';
+  document.getElementById('mp-race-grid').style.display='flex';
+  document.getElementById('lives-wrap-el').style.display='block';
+  ss('s-game');loadWord();
+}
+function mpRenderLobby(){
+  const chips=document.getElementById('mp-chips');chips.innerHTML='';
+  let count=0;
+  Object.values(mpPeers).forEach(p=>{
+    count++;const c=document.createElement('div');
+    c.className='p-chip'+(p.id===myPid?' me':'');c.textContent=p.name;chips.appendChild(c);
+  });
+  document.getElementById('mp-p-count').textContent=count;
+}
+function renderRaceGrid(){
+  const grid=document.getElementById('mp-race-grid');grid.innerHTML='';
+  Object.values(mpPeers).forEach(p=>{
+    const row=document.createElement('div');row.className='mp-race-row'+(p.id===myPid?' me':'');
+    const sc=mpScores[p.id]||0,mx=Math.max(1,...Object.values(mpScores));
+    row.innerHTML=`<span>${p.name}</span><div class="mp-prog"><div class="mp-fill" style="width:${(sc/mx)*100}%"></div></div><span>${sc}🪙</span>`;
+    grid.appendChild(row);
+  });
+}
+function mpLeave(){if(peer){peer.destroy();peer=null;}mpConns=[];mpPeers={};ss('s-home');}
+function copyCode(){
+  const c=document.getElementById('mp-room-code').textContent;
+  navigator.clipboard?.writeText(c).then(()=>toast('✅ Code copied!')).catch(()=>toast('Code: '+c));
+}
+
+// ══ INIT ══
+loadLb('all');loadPB();updateDailyBadge();
+</script>
+</body>
+</html>
