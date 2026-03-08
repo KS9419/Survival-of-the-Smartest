@@ -757,6 +757,10 @@ function rebuildHangmanSVG(){
       svg.insertAdjacentHTML('beforeend', skin[part](c));
     }
   });
+  // Restore correct display state after rebuild
+  if(typeof wrongCount !== 'undefined' && typeof maxLives !== 'undefined' && maxLives > 0){
+    updHM();
+  }
 }
 
 const HMP=['hm0','hm1','hm2','hm3','hm4','hm5','hm6','hm7','hm8','hm9','hm10','hm11'];
@@ -1000,7 +1004,10 @@ function renderKB(){
 }
 function updHM(){
   const step=HMP.length/maxLives,show=Math.floor(wrongCount*step);
-  HMP.forEach((id,i)=>document.getElementById(id).setAttribute('display',i<show?'block':'none'));
+  HMP.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.setAttribute('display',i<show?'block':'none');
+  });
 }
 function updatePUs(){
   document.getElementById('pu-reveal').disabled=coins<1;
