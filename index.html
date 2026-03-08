@@ -4,8 +4,64 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <title>Survival of the Smartest</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+function renderBadgesShop(){
+  const owned=getOwned(),eq=getEq();
+  const bd=document.getElementById('shop-badges');bd.innerHTML='';
+  BADGES_SHOP.forEach(item=>{
+    const isOwned=item.free||owned.includes('badge_'+item.id);
+    const isEq=eq.badge===item.id;
+    const div=document.createElement('div');
+    div.className='badge-shop-item'+(isEq?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<span style="font-size:1.6rem">${item.icon}</span><div class="badge-shop-info"><div class="badge-shop-name"><span class="badge-pill ${item.cls}">${item.icon} ${item.name}</span></div><div class="badge-shop-desc">${item.desc}</div></div><div style="font-size:0.75rem;text-align:right;min-width:60px">${item.free?'<span style="color:#4caf50;font-weight:700">FREE</span>':isOwned?'<span style="opacity:0.5">Owned</span>':'<span style="color:#ffd700;font-weight:700">🪙 '+item.price+'</span>'}<br/><span style="font-size:0.65rem;opacity:0.5">${isEq?'✅ On':'Tap'}</span></div>`;
+    div.onclick=()=>{
+      if(isEq){const e2=getEq();delete e2.badge;setEq(e2);toast('Badge removed');renderBadgesShop();}
+      else if(isOwned){const e2=getEq();e2.badge=item.id;setEq(e2);toast(item.icon+' Badge equipped!');renderBadgesShop();}
+      else{
+        const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+        if(cur<item.price){toast('Not enough coins!');return;}
+        localStorage.setItem('sots_coins',cur-item.price);
+        const o2=getOwned();o2.push('badge_'+item.id);setOwned(o2);
+        const e2=getEq();e2.badge=item.id;setEq(e2);
+        toast(item.icon+' Badge unlocked!');renderBadgesShop();loadPB();
+      }
+    };bd.appendChild(div);
+  });
+}
+
+// ══ ANIMATED HANGMAN shop item ══
+// Add to SKINS_SHOP logic: 'deathanim' is a separate equippable in badges
+
+</script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js">
+function renderBadgesShop(){
+  const owned=getOwned(),eq=getEq();
+  const bd=document.getElementById('shop-badges');bd.innerHTML='';
+  BADGES_SHOP.forEach(item=>{
+    const isOwned=item.free||owned.includes('badge_'+item.id);
+    const isEq=eq.badge===item.id;
+    const div=document.createElement('div');
+    div.className='badge-shop-item'+(isEq?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<span style="font-size:1.6rem">${item.icon}</span><div class="badge-shop-info"><div class="badge-shop-name"><span class="badge-pill ${item.cls}">${item.icon} ${item.name}</span></div><div class="badge-shop-desc">${item.desc}</div></div><div style="font-size:0.75rem;text-align:right;min-width:60px">${item.free?'<span style="color:#4caf50;font-weight:700">FREE</span>':isOwned?'<span style="opacity:0.5">Owned</span>':'<span style="color:#ffd700;font-weight:700">🪙 '+item.price+'</span>'}<br/><span style="font-size:0.65rem;opacity:0.5">${isEq?'✅ On':'Tap'}</span></div>`;
+    div.onclick=()=>{
+      if(isEq){const e2=getEq();delete e2.badge;setEq(e2);toast('Badge removed');renderBadgesShop();}
+      else if(isOwned){const e2=getEq();e2.badge=item.id;setEq(e2);toast(item.icon+' Badge equipped!');renderBadgesShop();}
+      else{
+        const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+        if(cur<item.price){toast('Not enough coins!');return;}
+        localStorage.setItem('sots_coins',cur-item.price);
+        const o2=getOwned();o2.push('badge_'+item.id);setOwned(o2);
+        const e2=getEq();e2.badge=item.id;setEq(e2);
+        toast(item.icon+' Badge unlocked!');renderBadgesShop();loadPB();
+      }
+    };bd.appendChild(div);
+  });
+}
+
+// ══ ANIMATED HANGMAN shop item ══
+// Add to SKINS_SHOP logic: 'deathanim' is a separate equippable in badges
+
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--a:#ff6b35;--a2:#f7c59f}
@@ -274,6 +330,37 @@ body.th-neon .nav-tab.active{box-shadow:0 0 12px rgba(255,0,255,0.4)}
 body.th-cosmic .nav-tab.active{box-shadow:0 0 12px rgba(123,47,255,0.5)}
 body.th-blood .nav-tab.active{box-shadow:0 0 12px rgba(255,23,68,0.4)}
 
+
+/* WILDCARD */
+.pu-btn.pu-wild{background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,152,0,0.15));border:1px solid rgba(255,215,0,0.35);color:#ffd700}
+.pu-btn.pu-wild:disabled{opacity:0.35}
+/* TITLE BADGES */
+.badge-pill{display:inline-block;padding:1px 7px;border-radius:50px;font-size:0.6rem;font-weight:900;margin-left:4px;vertical-align:middle}
+.badge-newbie{background:rgba(100,200,100,0.2);border:1px solid #4caf50;color:#4caf50}
+.badge-survivor{background:rgba(255,165,0,0.2);border:1px solid #ff9800;color:#ff9800}
+.badge-wordsmith{background:rgba(0,180,216,0.2);border:1px solid #00b4d8;color:#00b4d8}
+.badge-legend{background:rgba(255,215,0,0.2);border:1px solid #ffd700;color:#ffd700}
+.badge-reaper{background:rgba(255,23,68,0.2);border:1px solid #ff1744;color:#ff1744}
+.badge-ghost{background:rgba(176,190,197,0.2);border:1px solid #b0bec5;color:#b0bec5}
+.badge-cosmic{background:rgba(123,47,255,0.2);border:1px solid #7b2fff;color:#c770ff}
+/* SHOP BADGES TAB */
+#shop-badges{display:none;flex-direction:column;gap:8px}
+.badge-shop-item{padding:12px;border-radius:14px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s}
+.badge-shop-item.owned{border-color:rgba(255,255,255,0.2)}
+.badge-shop-item.equipped{border-color:#ffd700;background:rgba(255,215,0,0.08)}
+.badge-shop-item:active{transform:scale(0.97)}
+.badge-shop-info{flex:1}
+.badge-shop-name{font-size:0.85rem;font-weight:700}
+.badge-shop-desc{font-size:0.7rem;opacity:0.5;margin-top:2px}
+/* HANGMAN DEATH ANIMATION */
+@keyframes hmShake{0%{transform:rotate(0deg) translateX(0)}15%{transform:rotate(-10deg) translateX(-3px)}30%{transform:rotate(10deg) translateX(3px)}45%{transform:rotate(-8deg)}60%{transform:rotate(8deg)}75%{transform:rotate(-4deg)}100%{transform:rotate(0deg)}}
+@keyframes hmDrop{0%{transform:translateY(0);opacity:1}60%{transform:translateY(12px);opacity:0.8}100%{transform:translateY(22px) rotate(12deg);opacity:0.2}}
+.hm-svg.anim-shake{animation:hmShake 0.5s ease}
+.hm-svg.anim-drop{animation:hmDrop 0.8s ease forwards}
+/* WILDCARD KEY FLASH */
+@keyframes wcFlash{0%{background:rgba(255,215,0,0.5);transform:scale(1.15)}100%{background:rgba(255,255,255,0.08);transform:scale(1)}}
+.key-btn.wildcard-flash{animation:wcFlash 0.5s ease forwards;border-color:#ffd700;color:#ffd700}
+
 </style>
 </head>
 <body class="th-default">
@@ -479,6 +566,7 @@ body.th-blood .nav-tab.active{box-shadow:0 0 12px rgba(255,23,68,0.4)}
     <button class="pu-btn pu-reveal" id="pu-reveal" onclick="useReveal()">🔵 Reveal<br/><small>1🪙</small></button>
     <button class="pu-btn pu-life" id="pu-life" onclick="useExtraLife()">💚 Life<br/><small>2🪙</small></button>
     <button class="pu-btn pu-skip" id="pu-skip" onclick="useSkip()">🟠 Skip<br/><small>3🪙</small></button>
+    <button class="pu-btn pu-wild" id="pu-wild" onclick="useWildcard()">⭐ Wild<br/><small>1×</small></button>
   </div>
   <div class="card" style="padding:10px">
     <div class="keyboard" id="keyboard"></div>
@@ -495,9 +583,11 @@ body.th-blood .nav-tab.active{box-shadow:0 0 12px rgba(255,23,68,0.4)}
     <div class="nav-tabs">
       <div class="nav-tab active" onclick="swShop('themes',this)">🎨 Themes</div>
       <div class="nav-tab" onclick="swShop('skins',this)">💀 Skins</div>
+      <div class="nav-tab" onclick="swShop('badges',this)">🏅 Badges</div>
     </div>
     <div id="shop-themes" class="shop-grid"></div>
     <div id="shop-skins" class="shop-grid" style="display:none"></div>
+    <div id="shop-badges"></div>
   </div>
   <button class="btn btn-secondary" onclick="ss('s-home')">← Back</button>
 </div>
@@ -559,7 +649,7 @@ function snd(t){
 }
 
 // ══ WORD BANK ══
-const CATS=['Animals','Food','Countries','Sports','Movies','Science','History','Music','Technology','Mythology'];
+const CATS=['Animals','Food','Countries','Sports','Movies','Science','History','Music','Technology','Mythology','TV Shows','Athletes','Cooking','Geography'];
 const WB={
 Animals:{
 Easy:[{w:'elephant',h:'Largest land animal'},{w:'dolphin',h:'Clever leaping ocean mammal'},{w:'penguin',h:'Antarctic bird in a tuxedo'},{w:'giraffe',h:'Tallest living land animal'},{w:'cheetah',h:'Fastest land animal'},{w:'gorilla',h:'Largest of the great apes'},{w:'flamingo',h:'Pink bird that stands on one leg'},{w:'kangaroo',h:'Australian marsupial with a pouch'},{w:'crocodile',h:'Ancient reptile lurking near water'},{w:'butterfly',h:'Insect with colourful wings'},{w:'leopard',h:'Spotted big cat that climbs trees'},{w:'octopus',h:'Eight-armed sea creature'},{w:'peacock',h:'Bird with spectacular tail feathers'},{w:'hedgehog',h:'Small spiny nocturnal mammal'},{w:'platypus',h:'Egg-laying Australian mammal'}],
@@ -620,6 +710,30 @@ Easy:[{w:'zeus',h:'Greek king of the gods'},{w:'thor',h:'Norse god of thunder'},
 Medium:[{w:'prometheus',h:'Titan who gave fire to humans'},{w:'persephone',h:'Greek queen of the underworld'},{w:'loki',h:'Norse trickster god'},{w:'anubis',h:'Egyptian god of the dead'},{w:'osiris',h:'Egyptian god of the afterlife'},{w:'achilles',h:'Greek hero with a vulnerable heel'},{w:'odysseus',h:'Cunning hero of the Odyssey'},{w:'dionysus',h:'Greek god of wine'},{w:'artemis',h:'Greek goddess of the hunt'},{w:'valkyrie',h:'Norse female choosers of the slain'},{w:'cerberus',h:'Three-headed guard dog of Hades'},{w:'chimera',h:'Fire-breathing hybrid Greek monster'},{w:'hydra',h:'Multi-headed regenerating Greek serpent'},{w:'narcissus',h:'Youth who fell in love with his reflection'},{w:'midas',h:'King whose touch turned things to gold'}],
 Hard:[{w:'ragnarok',h:'Norse apocalyptic end of the gods'},{w:'ouroboros',h:'Serpent eating its own tail'},{w:'yggdrasil',h:'Norse world tree'},{w:'quetzalcoatl',h:'Feathered serpent Aztec god'},{w:'gilgamesh',h:'Earliest known mythological hero'},{w:'enkidu',h:"Gilgamesh's wild companion"},{w:'tartarus',h:'Deepest abyss of the Greek underworld'},{w:'tantalus',h:'Punished Greek king in eternal torment'},{w:'sisyphus',h:'King condemned to roll a boulder forever'},{w:'anansi',h:'West African spider trickster god'},{w:'thunderbird',h:'Native American storm creature'},{w:'jormungandr',h:'Norse world-encircling serpent'},{w:'fenrir',h:'Giant wolf of Norse mythology'},{w:'mahabharata',h:'Ancient Indian epic mythology'},{w:'popol vuh',h:'Mayan creation mythology text'}],
 INSANE:[{w:'hesperides',h:'Nymphs guarding the golden apple tree'},{w:'nidhogg',h:'Dragon gnawing at Yggdrasil roots'},{w:'apotheosis',h:'Elevation of a human to divine status'},{w:'theogony',h:"Hesiod's account of the gods' origins"},{w:'syncretism',h:'Merging of different religious myths'}]
+},
+'TV Shows':{
+Easy:[{w:'friends',h:'Six pals in New York City'},{w:'seinfeld',h:'Show about nothing'},{w:'lost',h:'Survivors on a mysterious island'},{w:'fargo',h:'Crime series in the snowy Midwest'},{w:'fleabag',h:'British comedy breaking the fourth wall'},{w:'succession',h:'Ruthless media dynasty drama'},{w:'chernobyl',h:'HBO nuclear disaster miniseries'},{w:'ozark',h:'Family launders money in Missouri'},{w:'breaking bad',h:'Chemistry teacher becomes drug lord'},{w:'the wire',h:'Baltimore crime drama'},{w:'sopranos',h:'New Jersey mob boss in therapy'},{w:'stranger things',h:'Kids vs supernatural forces in 80s Indiana'},{w:'peaky blinders',h:'Birmingham gang in post-WWI England'},{w:'game of thrones',h:'Epic fantasy battle for the Iron Throne'},{w:'dexter',h:'Serial killer who targets killers'}],
+Medium:[{w:'the leftovers',h:'Drama after 2 percent of population vanishes'},{w:'twin peaks',h:'Surreal mystery in a logging town'},{w:'dark',h:'German time travel family drama'},{w:'severance',h:'Work memories severed from personal life'},{w:'westworld',h:'Androids gain consciousness in a theme park'},{w:'true detective',h:'Louisiana detective duo haunted by evil'},{w:'mindhunter',h:'FBI agents study serial killers'},{w:'black mirror',h:'Tech dystopia anthology series'},{w:'barry',h:'Hitman tries to become an actor'},{w:'the americans',h:'Soviet spies living in suburban America'},{w:'shogun',h:'Feudal Japan through a British navigator'},{w:'deadwood',h:'Profane Western set in South Dakota'},{w:'station eleven',h:'Post-pandemic survivor anthology'},{w:'the terror',h:'Supernatural horror on Arctic expedition'},{w:'rectify',h:'Man released after 19 years on death row'}],
+Hard:[{w:'utopia',h:'British conspiracy thriller about a comic'},{w:'the knick',h:'Surgical drama set in 1900s New York'},{w:'patriot',h:'Spy comedy about an exhausted agent'},{w:'mr inbetween',h:'Australian hitman dramedy'},{w:'undone',h:'Rotoscope animated magical realism show'},{w:'happy valley',h:'Yorkshire police sergeant crime drama'},{w:'station eleven',h:'Post-pandemic survivor anthology'},{w:'the returned',h:'French supernatural drama'},{w:'halt and catch fire',h:'80s tech industry drama'},{w:'carnivale',h:'1930s dustbowl supernatural HBO drama'}],
+INSANE:[{w:'the prisoner',h:'60s surreal spy series'},{w:'pennies from heaven',h:'Dennis Potter BBC musical drama'},{w:'edge of darkness',h:'BBC nuclear conspiracy thriller'},{w:'a very british coup',h:'BBC thriller about socialist prime minister'}]
+},
+'Athletes':{
+Easy:[{w:'messi',h:'Argentine football GOAT'},{w:'ronaldo',h:'Portuguese football superstar'},{w:'lebron',h:'King of the basketball court'},{w:'federer',h:'Swiss tennis legend'},{w:'bolt',h:'Fastest man in history'},{w:'jordan',h:'Six-time NBA champion with the Bulls'},{w:'pele',h:'Brazilian football icon'},{w:'serena',h:'23-time Grand Slam tennis champion'},{w:'hamilton',h:'Seven-time Formula 1 world champion'},{w:'djokovic',h:'Serbian tennis world number one'},{w:'mbappe',h:'French football speedster'},{w:'tiger woods',h:'Golf legend with 15 majors'},{w:'nadal',h:'King of clay courts'},{w:'ali',h:'Greatest boxer of all time'},{w:'ronaldinho',h:'Brazilian football magician'}],
+Medium:[{w:'eliud kipchoge',h:'Marathon runner who broke two hours'},{w:'simone biles',h:'Greatest gymnast of all time'},{w:'steph curry',h:'NBA sharpshooter with Golden State'},{w:'mo farah',h:'British long distance double Olympic gold'},{w:'naomi osaka',h:'Japanese-American tennis powerhouse'},{w:'erling haaland',h:'Norwegian goal machine'},{w:'caitlin clark',h:'WNBA record-breaking point guard'},{w:'carlos alcaraz',h:'Spanish teenage tennis prodigy'},{w:'mondo duplantis',h:'Swedish pole vault world record holder'},{w:'faith kipyegon',h:'Kenyan mile world record holder'},{w:'neymar',h:'Brazilian flair and dribbling'},{w:'allyson felix',h:'Most decorated female US Olympian'},{w:'phil foden',h:'Manchester City England midfielder'},{w:'pedri',h:'Spanish Barcelona midfield maestro'},{w:'wayde van niekerk',h:'400m world record holder'}],
+Hard:[{w:'yusra mardini',h:'Syrian refugee swimmer turned Olympian'},{w:'elaine thompson herah',h:'Jamaican sprint double Olympic champion'},{w:'bebe vio',h:'Italian Paralympic fencer'},{w:'sydney mclaughlin levrone',h:'400m hurdles world record holder'},{w:'marcell jacobs',h:'Italian 100m Olympic champion'},{w:'jakob ingebrigtsen',h:'Norwegian middle distance prodigy'},{w:'beatrice chebet',h:'Kenyan 5000m world champion'},{w:'keely hodgkinson',h:'British 800m Olympic champion'},{w:'leon marchand',h:'French swimming multi-gold Olympian'},{w:'armand duplantis',h:'Pole vault world record holder'}],
+INSANE:[{w:'abebe bikila',h:'Ethiopian barefoot marathon Olympic gold'},{w:'kipchoge keino',h:'Kenyan pioneer of African middle distance'},{w:'lasse viren',h:'Finnish double double Olympic distance runner'},{w:'paavo nurmi',h:'Flying Finn nine Olympic gold medals'}]
+},
+'Cooking':{
+Easy:[{w:'sauteing',h:'Cooking quickly in a hot pan with fat'},{w:'marinate',h:'Soaking food in seasoned liquid'},{w:'blanching',h:'Brief boiling then ice bath'},{w:'julienne',h:'Cutting vegetables into thin strips'},{w:'braise',h:'Slow cook in liquid after browning'},{w:'basting',h:'Spooning cooking juices over meat'},{w:'simmer',h:'Gentle bubbling just below boiling'},{w:'deglaze',h:'Adding liquid to lift pan drippings'},{w:'caramelize',h:'Heating sugar until golden brown'},{w:'poaching',h:'Cooking gently in simmering liquid'},{w:'roasting',h:'Cooking with dry heat in an oven'},{w:'mince',h:'Chop into very fine pieces'},{w:'fold',h:'Gently combining to preserve air'},{w:'garnish',h:'Decorative addition to a finished dish'},{w:'zesting',h:'Scraping citrus outer peel for flavour'}],
+Medium:[{w:'emulsify',h:'Combining oil and water based liquids'},{w:'confit',h:'Slow cooking meat submerged in its own fat'},{w:'brunoise',h:'Very fine vegetable dice'},{w:'tempering',h:'Stabilising chocolate by controlled heating'},{w:'reduction',h:'Boiling liquid to concentrate flavour'},{w:'flambé',h:'Setting alcohol alight on food'},{w:'chiffonade',h:'Finely sliced leafy herbs or greens'},{w:'en papillote',h:'Cooking in a sealed parchment parcel'},{w:'mise en place',h:'Everything prepared before cooking starts'},{w:'roux',h:'Equal fat and flour cooked together'},{w:'mirepoix',h:'French base of carrot onion celery'},{w:'fond',h:'Browned bits stuck to a pan bottom'},{w:'brine',h:'Salted water solution for preserving'},{w:'veloute',h:'One of the five French mother sauces'},{w:'nappe',h:'Sauce that coats the back of a spoon'}],
+Hard:[{w:'gastrique',h:'Sweet sour reduction of sugar and vinegar'},{w:'gremolata',h:'Italian lemon herb garlic condiment'},{w:'persillade',h:'French garlic and parsley mixture'},{w:'spherification',h:'Molecular gastronomy liquid encapsulation'},{w:'sous vide',h:'Vacuum sealed precision water bath cooking'},{w:'agar agar',h:'Plant based gelatin alternative'},{w:'dehydration',h:'Removing moisture to preserve or intensify'},{w:'transglutaminase',h:'Enzyme that bonds meat together'},{w:'en croute',h:'Baking food encased in pastry'},{w:'lacto ferment',h:'Preserving in saltwater using bacteria'}],
+INSANE:[{w:'hydrocolloide',h:'Gelling agent in molecular gastronomy'},{w:'centrifugation',h:'Spinning to clarify cooking liquids'},{w:'rotovap',h:'Rotary evaporator for culinary distillation'},{w:'methyl cellulose',h:'Thickener that gels when heated not cooled'}]
+},
+'Geography':{
+Easy:[{w:'sahara',h:'Worlds largest hot desert'},{w:'amazon',h:'Worlds largest rainforest'},{w:'everest',h:'Worlds highest mountain'},{w:'nile',h:'Africas longest river'},{w:'atlantic',h:'Ocean between Europe and America'},{w:'pacific',h:'Worlds largest ocean'},{w:'grand canyon',h:'Deep gorge carved by the Colorado River'},{w:'dead sea',h:'Saltiest and lowest body of water on Earth'},{w:'kilimanjaro',h:'Africas highest mountain'},{w:'mediterranean',h:'Sea between Europe and Africa'},{w:'himalaya',h:'Mountain range containing Everest'},{w:'amazon river',h:'Flows through the Brazilian rainforest'},{w:'niagara falls',h:'Famous waterfall on the USA Canada border'},{w:'arctic ocean',h:'Smallest ocean surrounding the North Pole'},{w:'victoria lake',h:'Africas largest lake'}],
+Medium:[{w:'patagonia',h:'Windswept region at the tip of South America'},{w:'gobi desert',h:'Cold desert across Mongolia and China'},{w:'mekong',h:'River flowing through Southeast Asia'},{w:'mariana trench',h:'Earths deepest ocean point'},{w:'lake titicaca',h:'Worlds highest navigable lake'},{w:'coral triangle',h:'Most biodiverse marine region'},{w:'aral sea',h:'Almost fully dried up Central Asian lake'},{w:'tierra del fuego',h:'Archipelago at the tip of South America'},{w:'cape horn',h:'Southernmost point of South America'},{w:'atacama',h:'Worlds driest non-polar desert'},{w:'bering strait',h:'Narrow sea between Russia and Alaska'},{w:'volga river',h:'Europes longest river in Russia'},{w:'congo basin',h:'Worlds second largest rainforest'},{w:'strait of gibraltar',h:'Narrow sea between Spain and Morocco'},{w:'dead sea',h:'Saltiest body of water on Earth'}],
+Hard:[{w:'siachen glacier',h:'Highest battleground on Earth'},{w:'namib desert',h:'Worlds oldest desert in southern Africa'},{w:'tonle sap',h:'Reversing river lake system in Cambodia'},{w:'dallol',h:'Hottest inhabited place on Earth in Ethiopia'},{w:'zhangjiajie',h:'Pillar mountains that inspired Avatar'},{w:'socotra',h:'Yemeni island with alien landscape'},{w:'danakil depression',h:'Volcanic depression in the Horn of Africa'},{w:'sundarbans',h:'Largest mangrove forest in Bangladesh'},{w:'richat structure',h:'Eye of the Sahara in Mauritania'},{w:'salar de uyuni',h:'Worlds largest salt flat in Bolivia'}],
+INSANE:[{w:'pororoca',h:'Amazon tidal bore wave'},{w:'kaieteur falls',h:'Most powerful waterfall in South America'},{w:'lechuguilla cave',h:'Deep cave system in New Mexico'},{w:'bioluminescent bay',h:'Glowing dinoflagellate bay in Puerto Rico'},{w:'ogaden',h:'Disputed arid region of eastern Ethiopia'}]
 }
 };
 
@@ -759,6 +873,74 @@ function rebuildHangmanSVG(){
   }
 }
 
+// ══ BADGES SHOP ══
+const BADGES_SHOP=[
+  {id:'newbie',name:'The Newbie',icon:'🌱',desc:'Just getting started',cls:'badge-newbie',price:0,free:true},
+  {id:'survivor',name:'Survivor',icon:'🔥',desc:'Outlasted the odds',cls:'badge-survivor',price:6},
+  {id:'wordsmith',name:'Wordsmith',icon:'📝',desc:'Master of letters',cls:'badge-wordsmith',price:10},
+  {id:'legend',name:'Legend',icon:'👑',desc:'Among the greatest',cls:'badge-legend',price:18},
+  {id:'reaper',name:'The Reaper',icon:'💀',desc:'Death comes for all',cls:'badge-reaper',price:15},
+  {id:'ghost',name:'The Ghost',icon:'👻',desc:'Invisible and unstoppable',cls:'badge-ghost',price:12},
+  {id:'cosmic',name:'Cosmic',icon:'🌌',desc:'Beyond this world',cls:'badge-cosmic',price:22},
+];
+
+function getBadgeDef(id){return BADGES_SHOP.find(b=>b.id===id);}
+function getEquippedBadgeHTML(){
+  const eq=getEq();
+  if(!eq.badge)return '';
+  const b=getBadgeDef(eq.badge);
+  if(!b)return '';
+  return `<span class="badge-pill ${b.cls}">${b.icon} ${b.name}</span>`;
+}
+
+// ══ WILDCARD STATE ══
+let wildcardUsed=false;
+
+function useWildcard(){
+  if(wildcardUsed||!alive)return;
+  // Find unrevealed letters in current word
+  const unrevealed=[...new Set(curWord.replace(/ /g,''))].filter(ch=>!guessed.has(ch));
+  if(!unrevealed.length){toast('No letters to reveal!');return;}
+  // Pick random unrevealed letter
+  const ch=unrevealed[Math.floor(Math.random()*unrevealed.length)];
+  wildcardUsed=true;
+  document.getElementById('pu-wild').disabled=true;
+  // Flash the key
+  const btn=document.getElementById('key-'+ch);
+  if(btn){btn.classList.add('wildcard-flash');setTimeout(()=>btn.classList.remove('wildcard-flash'),600);}
+  toast('⭐ Wildcard: '+ch.toUpperCase()+' revealed!',2000);
+  // Add to guessed (correct, no penalty)
+  guessed.add(ch);
+  const keyBtn=document.getElementById('key-'+ch);
+  if(keyBtn){keyBtn.classList.add('correct');keyBtn.disabled=true;}
+  renderWord();
+  checkSolved();
+}
+
+function resetWildcard(){
+  wildcardUsed=false;
+  const wb=document.getElementById('pu-wild');
+  if(wb) wb.disabled=false;
+}
+
+// ══ DEATH ANIMATION ══
+function playDeathAnimation(cb){
+  const svg=document.getElementById('hm-svg');
+  if(!svg){if(cb)cb();return;}
+  const eq=getEq();
+  const hasAnim=eq.deathanim;
+  if(!hasAnim){if(cb)cb();return;}
+  svg.classList.add('anim-shake');
+  setTimeout(()=>{
+    svg.classList.remove('anim-shake');
+    svg.classList.add('anim-drop');
+    setTimeout(()=>{
+      svg.classList.remove('anim-drop');
+      if(cb)cb();
+    },800);
+  },520);
+}
+
 const HMP=['hm0','hm1','hm2','hm3','hm4','hm5','hm6','hm7','hm8','hm9','hm10','hm11'];
 
 // ══ COSMETICS ══
@@ -772,6 +954,7 @@ const THEMES_SHOP=[
 ];
 const SKINS_SHOP=[
   {id:'classic',name:'Classic',icon:'🖊️',price:0,free:true},
+  {id:'animated',name:'Death Animation',icon:'💥',price:8,isAnim:true},
   {id:'bones',name:'Skeleton',icon:'💀',price:5},
   {id:'robot',name:'Robot',icon:'🤖',price:8},
   {id:'ghost',name:'Ghost',icon:'👻',price:10},
@@ -838,7 +1021,7 @@ async function loadLb(filter='all'){
   const{data,error}=await q;
   if(error||!data?.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.3;padding:12px">No scores yet!</td></tr>';return;}
   const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
-  tb.innerHTML=data.map((r,i)=>`<tr><td>${medals[i]||i+1}</td><td><b>${r.nickname}</b></td><td><b>${r.coins}🪙</b></td><td><span class="diff-tag ${r.difficulty}">${r.difficulty}</span></td><td style="opacity:.38;font-size:.65rem">${new Date(r.created_at).toLocaleDateString()}</td></tr>`).join('');
+  tb.innerHTML=data.map((r,i)=>{const bd=r.badge?BADGES_SHOP.find(b=>b.id===r.badge):null;const bHtml=bd?`<span class="badge-pill ${bd.cls}">${bd.icon}</span>`:'';return`<tr><td>${medals[i]||i+1}</td><td><b>${r.nickname}</b>${bHtml}</td><td><b>${r.coins}🪙</b></td><td><span class="diff-tag ${r.difficulty}">${r.difficulty}</span></td><td style="opacity:.38;font-size:.65rem">${new Date(r.created_at).toLocaleDateString()}</td></tr>`;}).join('');
 }
 function swLb(f,btn){lbTab=f;document.querySelectorAll('.lb-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadLb(f);}
 
@@ -927,6 +1110,7 @@ function loadWord(){
   curWord=e.word;curHint=e.hint;curCat=e.cat;
   guessed=new Set();wrongCount=0;maxLives=cfg.lives;wStart=Date.now();
   rebuildHangmanSVG();
+  resetWildcard();
   mechanic=getMechanic();
 
   if(mechanic==='partial'){guessed.add(curWord[0]);guessed.add(curWord[curWord.length-1]);}
@@ -1024,7 +1208,7 @@ function guess(ch){
     if(gameMode==='suddendeath'){clearInterval(timerInt);snd('death');alive=false;streak=0;showResult(false,0,'💀 Sudden Death!');return;}
     if(cfg.insta&&Math.random()<cfg.instaC){triggerInstaDeath();return;}
     wrongCount++;updHM();renderLives();
-    if(wrongCount>=maxLives){clearInterval(timerInt);snd('death');alive=false;streak=0;showResult(false,0,'');}
+    if(wrongCount>=maxLives){clearInterval(timerInt);snd('death');alive=false;streak=0;playDeathAnimation(()=>showResult(false,0,''));}
   }
   updatePUs();
 }
@@ -1143,7 +1327,8 @@ async function submitScore(){
   if(submitted){toast('Already submitted!');return;}
   if(sessCoins===0){toast('No coins to submit!');return;}
   const dl={classic:diff,timeattack:'TimeAttack',suddendeath:'SuddenDeath',daily:'Daily',multiplayer:'Multiplayer'}[gameMode]||diff;
-  const{error}=await SB.from('leaderboard').insert({nickname,coins:sessCoins,difficulty:dl,words_completed:wordsDone});
+  const eq=getEq();const badgeId=eq.badge||null;
+  const{error}=await SB.from('leaderboard').insert({nickname,coins:sessCoins,difficulty:dl,words_completed:wordsDone,badge:badgeId});
   if(error){toast('Error submitting');console.error(error);return;}
   submitted=true;toast('✅ Score submitted!');loadLb(lbTab);
 }
@@ -1161,6 +1346,9 @@ function swShop(tab,btn){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('shop-themes').style.display=tab==='themes'?'grid':'none';
   document.getElementById('shop-skins').style.display=tab==='skins'?'grid':'none';
+  const bd=document.getElementById('shop-badges');
+  bd.style.display=tab==='badges'?'flex':'none';
+  if(tab==='badges')renderBadgesShop();
 }
 function renderShop(){
   const c=parseInt(localStorage.getItem('sots_coins')||'0');
@@ -1192,9 +1380,28 @@ function renderShop(){
     const key='skin_'+item.id;
     const isOwned=item.free||owned.includes(key),isEq=eq.skin===item.id;
     const div=document.createElement('div');
-    div.className='shop-item'+(isEq?' equipped':isOwned?' owned':'');
-    div.innerHTML=`<div class="shop-icon">${item.icon}</div><div class="shop-name">${item.name}</div><div class="shop-price">${item.free?'FREE':isOwned?'':('🪙 '+item.price)}</div><div class="shop-status ${isEq?'e':isOwned?'o':''}">${isEq?'✅ Equipped':isOwned?'Tap to equip':'Tap to buy'}</div>`;
+    const animOn=item.isAnim&&getEq().deathanim;
+    const isEqFinal=animOn||isEq;
+    const statusTxt=item.isAnim?(animOn?'✅ On — tap off':(isOwned?'Tap to toggle':'Tap to buy')):(isEq?'✅ Equipped':isOwned?'Tap to equip':'Tap to buy');
+    const statusCls=isEqFinal?'e':isOwned?'o':'';
+    const priceTxt=item.free?'FREE':(isOwned&&!item.isAnim)?'':('🪙 '+item.price);
+    div.className='shop-item'+(isEqFinal?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<div class="shop-icon">${item.icon}</div><div class="shop-name">${item.name}</div><div class="shop-price">${priceTxt}</div><div class="shop-status ${statusCls}">${statusTxt}</div>`;
     div.onclick=()=>{
+      if(item.isAnim){
+        const e3=getEq();const wasOn=!!e3.deathanim;
+        if(!isOwned){
+          const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+          if(cur<item.price){toast('Not enough coins!');return;}
+          localStorage.setItem('sots_coins',cur-item.price);
+          const o2=getOwned();o2.push('skin_'+item.id);setOwned(o2);
+          e3.deathanim=true;setEq(e3);toast('💥 Death animation unlocked!');renderShop();loadPB();
+        } else {
+          if(wasOn){delete e3.deathanim;toast('Animation off');}else{e3.deathanim=true;toast('💥 Animation on!');}
+          setEq(e3);renderShop();
+        }
+        return;
+      }
       if(isEq){const e2=getEq();delete e2.skin;setEq(e2);toast('Skin removed');rebuildHangmanSVG();renderShop();}
       else if(isOwned){const e2=getEq();e2.skin=item.id;setEq(e2);toast('Skin equipped!');rebuildHangmanSVG();renderShop();}
       else{
@@ -1325,6 +1532,34 @@ function copyCode(){
 
 // ══ INIT ══
 loadLb('all');loadPB();updateDailyBadge();
+
+function renderBadgesShop(){
+  const owned=getOwned(),eq=getEq();
+  const bd=document.getElementById('shop-badges');bd.innerHTML='';
+  BADGES_SHOP.forEach(item=>{
+    const isOwned=item.free||owned.includes('badge_'+item.id);
+    const isEq=eq.badge===item.id;
+    const div=document.createElement('div');
+    div.className='badge-shop-item'+(isEq?' equipped':isOwned?' owned':'');
+    div.innerHTML=`<span style="font-size:1.6rem">${item.icon}</span><div class="badge-shop-info"><div class="badge-shop-name"><span class="badge-pill ${item.cls}">${item.icon} ${item.name}</span></div><div class="badge-shop-desc">${item.desc}</div></div><div style="font-size:0.75rem;text-align:right;min-width:60px">${item.free?'<span style="color:#4caf50;font-weight:700">FREE</span>':isOwned?'<span style="opacity:0.5">Owned</span>':'<span style="color:#ffd700;font-weight:700">🪙 '+item.price+'</span>'}<br/><span style="font-size:0.65rem;opacity:0.5">${isEq?'✅ On':'Tap'}</span></div>`;
+    div.onclick=()=>{
+      if(isEq){const e2=getEq();delete e2.badge;setEq(e2);toast('Badge removed');renderBadgesShop();}
+      else if(isOwned){const e2=getEq();e2.badge=item.id;setEq(e2);toast(item.icon+' Badge equipped!');renderBadgesShop();}
+      else{
+        const cur=parseInt(localStorage.getItem('sots_coins')||'0');
+        if(cur<item.price){toast('Not enough coins!');return;}
+        localStorage.setItem('sots_coins',cur-item.price);
+        const o2=getOwned();o2.push('badge_'+item.id);setOwned(o2);
+        const e2=getEq();e2.badge=item.id;setEq(e2);
+        toast(item.icon+' Badge unlocked!');renderBadgesShop();loadPB();
+      }
+    };bd.appendChild(div);
+  });
+}
+
+// ══ ANIMATED HANGMAN shop item ══
+// Add to SKINS_SHOP logic: 'deathanim' is a separate equippable in badges
+
 </script>
 </body>
 </html>
