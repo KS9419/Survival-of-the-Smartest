@@ -632,133 +632,129 @@ const DCFG={
 };
 
 // ══ SKIN DEFINITIONS ══
-const SKIN_DEFS = {
-  classic: {
-    scaffoldColor: '#444',
-    bodyColor: '#e74c3c',
-    head: (c) => `<circle id="hm0" cx="130" cy="60" r="15" stroke="${c}" stroke-width="3" fill="none" display="none"/>`,
-    body: (c) => `<line id="hm1" x1="130" y1="75" x2="130" y2="120" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    lArm: (c) => `<line id="hm2" x1="130" y1="85" x2="108" y2="105" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    rArm: (c) => `<line id="hm3" x1="130" y1="85" x2="152" y2="105" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    lLeg: (c) => `<line id="hm4" x1="130" y1="120" x2="112" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    rLeg: (c) => `<line id="hm5" x1="130" y1="120" x2="148" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    lHand: (c) => `<line id="hm6" x1="108" y1="105" x2="100" y2="115" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    rHand: (c) => `<line id="hm7" x1="152" y1="105" x2="160" y2="115" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    lFoot: (c) => `<line id="hm8" x1="112" y1="148" x2="104" y2="155" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    rFoot: (c) => `<line id="hm9" x1="148" y1="148" x2="156" y2="155" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    eye1: (c) => `<circle id="hm10" cx="133" cy="59" r="2" fill="${c}" display="none"/>`,
-    mouth: (c) => `<line id="hm11" x1="124" y1="67" x2="136" y2="67" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+// Each skin is a function that receives (svg, color) and appends SVG elements correctly
+// Uses createElementNS to ensure proper SVG namespace
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVG_NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
+  el.setAttribute('display','none');
+  return el;
+}
+
+const SKIN_BUILDERS = {
+  classic: (svg, c) => {
+    const sc = '#555';
+    svg.appendChild(Object.assign(svgEl('circle',{id:'hm0',cx:130,cy:60,r:15,stroke:c,'stroke-width':3,fill:'none'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm1',x1:130,y1:75,x2:130,y2:120,stroke:c,'stroke-width':3,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm2',x1:130,y1:85,x2:108,y2:105,stroke:c,'stroke-width':3,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm3',x1:130,y1:85,x2:152,y2:105,stroke:c,'stroke-width':3,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm4',x1:130,y1:120,x2:112,y2:148,stroke:c,'stroke-width':3,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm5',x1:130,y1:120,x2:148,y2:148,stroke:c,'stroke-width':3,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm6',x1:108,y1:105,x2:100,y2:115,stroke:c,'stroke-width':2,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm7',x1:152,y1:105,x2:160,y2:115,stroke:c,'stroke-width':2,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm8',x1:112,y1:148,x2:104,y2:155,stroke:c,'stroke-width':2,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm9',x1:148,y1:148,x2:156,y2:155,stroke:c,'stroke-width':2,'stroke-linecap':'round'})));
+    svg.appendChild(Object.assign(svgEl('circle',{id:'hm10',cx:133,cy:59,r:2,fill:c})));
+    svg.appendChild(Object.assign(svgEl('line',{id:'hm11',x1:124,y1:67,x2:136,y2:67,stroke:c,'stroke-width':2,'stroke-linecap':'round'})));
   },
-  bones: {
-    scaffoldColor: '#555',
-    bodyColor: '#bbb',
-    head: (c) => `<circle id="hm0" cx="130" cy="60" r="15" stroke="${c}" stroke-width="3" fill="rgba(200,200,200,0.08)" display="none"/>`,
-    body: (c) => `<line id="hm1" x1="130" y1="75" x2="130" y2="120" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
-    lArm: (c) => `<line id="hm2" x1="130" y1="85" x2="108" y2="108" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
-    rArm: (c) => `<line id="hm3" x1="130" y1="85" x2="152" y2="108" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
-    lLeg: (c) => `<line id="hm4" x1="130" y1="120" x2="110" y2="150" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
-    rLeg: (c) => `<line id="hm5" x1="130" y1="120" x2="150" y2="150" stroke="${c}" stroke-width="5" stroke-linecap="round" display="none"/>`,
-    lHand: (c) => `<circle id="hm6" cx="106" cy="110" r="4" fill="${c}" display="none"/>`,
-    rHand: (c) => `<circle id="hm7" cx="154" cy="110" r="4" fill="${c}" display="none"/>`,
-    lFoot: (c) => `<circle id="hm8" cx="108" cy="154" r="4" fill="${c}" display="none"/>`,
-    rFoot: (c) => `<circle id="hm9" cx="152" cy="154" r="4" fill="${c}" display="none"/>`,
-    eye1: (c) => `<text id="hm10" x="122" y="64" font-size="10" fill="${c}" display="none">💀</text>`,
-    mouth: (c) => `<line id="hm11" x1="124" y1="68" x2="136" y2="64" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
+  bones: (svg, c) => {
+    svg.appendChild(svgEl('circle',{id:'hm0',cx:130,cy:60,r:15,stroke:c,'stroke-width':3,fill:'rgba(200,200,200,0.08)'}));
+    svg.appendChild(svgEl('line',{id:'hm1',x1:130,y1:75,x2:130,y2:120,stroke:c,'stroke-width':5,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm2',x1:130,y1:85,x2:108,y2:108,stroke:c,'stroke-width':5,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm3',x1:130,y1:85,x2:152,y2:108,stroke:c,'stroke-width':5,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm4',x1:130,y1:120,x2:110,y2:150,stroke:c,'stroke-width':5,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm5',x1:130,y1:120,x2:150,y2:150,stroke:c,'stroke-width':5,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('circle',{id:'hm6',cx:106,cy:110,r:4,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm7',cx:154,cy:110,r:4,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm8',cx:108,cy:154,r:4,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm9',cx:152,cy:154,r:4,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm10',cx:124,cy:56,r:3,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm11',cx:136,cy:56,r:3,fill:c}));
   },
-  robot: {
-    scaffoldColor: '#445',
-    bodyColor: '#00e5ff',
-    head: (c) => `<rect id="hm0" x="115" y="45" width="30" height="28" rx="4" stroke="${c}" stroke-width="3" fill="rgba(0,229,255,0.08)" display="none"/>`,
-    body: (c) => `<rect id="hm1" x="118" y="75" width="24" height="40" rx="3" stroke="${c}" stroke-width="2" fill="rgba(0,229,255,0.06)" display="none"/>`,
-    lArm: (c) => `<line id="hm2" x1="118" y1="80" x2="102" y2="108" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    rArm: (c) => `<line id="hm3" x1="142" y1="80" x2="158" y2="108" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    lLeg: (c) => `<line id="hm4" x1="124" y1="115" x2="112" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    rLeg: (c) => `<line id="hm5" x1="136" y1="115" x2="148" y2="148" stroke="${c}" stroke-width="3" stroke-linecap="round" display="none"/>`,
-    lHand: (c) => `<rect id="hm6" x="96" y="108" width="10" height="8" rx="2" fill="${c}" display="none"/>`,
-    rHand: (c) => `<rect id="hm7" x="154" y="108" width="10" height="8" rx="2" fill="${c}" display="none"/>`,
-    lFoot: (c) => `<rect id="hm8" x="106" y="148" width="12" height="7" rx="2" fill="${c}" display="none"/>`,
-    rFoot: (c) => `<rect id="hm9" x="142" y="148" width="12" height="7" rx="2" fill="${c}" display="none"/>`,
-    eye1: (c) => `<rect id="hm10" x="120" y="52" width="6" height="6" rx="1" fill="${c}" display="none"/>`,
-    mouth: (c) => `<rect id="hm11" x="119" y="63" width="22" height="4" rx="2" fill="${c}" opacity="0.8" display="none"/>`,
+  robot: (svg, c) => {
+    svg.appendChild(svgEl('rect',{id:'hm0',x:115,y:45,width:30,height:28,rx:4,stroke:c,'stroke-width':3,fill:'rgba(0,229,255,0.08)'}));
+    svg.appendChild(svgEl('rect',{id:'hm1',x:118,y:75,width:24,height:40,rx:3,stroke:c,'stroke-width':2,fill:'rgba(0,229,255,0.06)'}));
+    svg.appendChild(svgEl('line',{id:'hm2',x1:118,y1:80,x2:102,y2:108,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm3',x1:142,y1:80,x2:158,y2:108,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm4',x1:124,y1:115,x2:112,y2:148,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm5',x1:136,y1:115,x2:148,y2:148,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('rect',{id:'hm6',x:96,y:108,width:10,height:8,rx:2,fill:c}));
+    svg.appendChild(svgEl('rect',{id:'hm7',x:154,y:108,width:10,height:8,rx:2,fill:c}));
+    svg.appendChild(svgEl('rect',{id:'hm8',x:106,y:148,width:12,height:7,rx:2,fill:c}));
+    svg.appendChild(svgEl('rect',{id:'hm9',x:142,y:148,width:12,height:7,rx:2,fill:c}));
+    svg.appendChild(svgEl('rect',{id:'hm10',x:120,y:52,width:6,height:6,rx:1,fill:c}));
+    svg.appendChild(svgEl('rect',{id:'hm11',x:126,y:52,width:6,height:6,rx:1,fill:c}));
   },
-  ghost: {
-    scaffoldColor: '#446',
-    bodyColor: '#b0bec5',
-    head: (c) => `<ellipse id="hm0" cx="130" cy="62" rx="16" ry="18" stroke="${c}" stroke-width="2" fill="rgba(176,190,197,0.1)" display="none"/>`,
-    body: (c) => `<path id="hm1" d="M114 78 Q114 120 114 128 Q121 122 128 128 Q135 122 142 128 Q146 122 146 78 Z" stroke="${c}" stroke-width="2" fill="rgba(176,190,197,0.08)" display="none"/>`,
-    lArm: (c) => `<line id="hm2" x1="114" y1="88" x2="100" y2="100" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    rArm: (c) => `<line id="hm3" x1="146" y1="88" x2="160" y2="100" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    lLeg: (c) => `<line id="hm4" x1="120" y1="128" x2="114" y2="150" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    rLeg: (c) => `<line id="hm5" x1="140" y1="128" x2="146" y2="150" stroke="${c}" stroke-width="2" stroke-linecap="round" display="none"/>`,
-    lHand: (c) => `<circle id="hm6" cx="98" cy="103" r="4" fill="${c}" opacity="0.6" display="none"/>`,
-    rHand: (c) => `<circle id="hm7" cx="162" cy="103" r="4" fill="${c}" opacity="0.6" display="none"/>`,
-    lFoot: (c) => `<circle id="hm8" cx="112" cy="154" r="5" fill="${c}" opacity="0.5" display="none"/>`,
-    rFoot: (c) => `<circle id="hm9" cx="148" cy="154" r="5" fill="${c}" opacity="0.5" display="none"/>`,
-    eye1: (c) => `<ellipse id="hm10" cx="124" cy="60" rx="4" ry="5" fill="${c}" display="none"/>`,
-    mouth: (c) => `<path id="hm11" d="M122 70 Q127 76 130 70 Q133 76 138 70" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round" display="none"/>`,
+  ghost: (svg, c) => {
+    svg.appendChild(svgEl('ellipse',{id:'hm0',cx:130,cy:62,rx:16,ry:18,stroke:c,'stroke-width':2,fill:'rgba(176,190,197,0.1)'}));
+    svg.appendChild(svgEl('line',{id:'hm1',x1:130,y1:80,x2:130,y2:125,stroke:c,'stroke-width':4,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm2',x1:120,y1:90,x2:100,y2:105,stroke:c,'stroke-width':2,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm3',x1:140,y1:90,x2:160,y2:105,stroke:c,'stroke-width':2,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm4',x1:124,y1:125,x2:114,y2:150,stroke:c,'stroke-width':2,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm5',x1:136,y1:125,x2:146,y2:150,stroke:c,'stroke-width':2,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('circle',{id:'hm6',cx:98,cy:108,r:4,fill:c,opacity:0.6}));
+    svg.appendChild(svgEl('circle',{id:'hm7',cx:162,cy:108,r:4,fill:c,opacity:0.6}));
+    svg.appendChild(svgEl('circle',{id:'hm8',cx:112,cy:154,r:5,fill:c,opacity:0.5}));
+    svg.appendChild(svgEl('circle',{id:'hm9',cx:148,cy:154,r:5,fill:c,opacity:0.5}));
+    svg.appendChild(svgEl('ellipse',{id:'hm10',cx:124,cy:60,rx:4,ry:5,fill:c}));
+    svg.appendChild(svgEl('ellipse',{id:'hm11',cx:136,cy:60,rx:4,ry:5,fill:c}));
   },
-  dragon: {
-    scaffoldColor: '#543',
-    bodyColor: '#ff6f00',
-    head: (c) => `<polygon id="hm0" points="130,42 148,58 148,72 130,78 112,72 112,58" stroke="${c}" stroke-width="2" fill="rgba(255,111,0,0.12)" display="none"/>`,
-    body: (c) => `<line id="hm1" x1="130" y1="78" x2="130" y2="125" stroke="${c}" stroke-width="4" stroke-linecap="round" display="none"/>`,
-    lArm: (c) => `<path id="hm2" d="M130 88 L106 100 L100 112" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
-    rArm: (c) => `<path id="hm3" d="M130 88 L154 100 L160 112" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
-    lLeg: (c) => `<path id="hm4" d="M128 125 L110 145 L104 158" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
-    rLeg: (c) => `<path id="hm5" d="M132 125 L150 145 L156 158" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" display="none"/>`,
-    lHand: (c) => `<polygon id="hm6" points="98,112 94,118 104,116" fill="${c}" display="none"/>`,
-    rHand: (c) => `<polygon id="hm7" points="162,112 166,118 156,116" fill="${c}" display="none"/>`,
-    lFoot: (c) => `<polygon id="hm8" points="102,158 96,164 110,162" fill="${c}" display="none"/>`,
-    rFoot: (c) => `<polygon id="hm9" points="158,158 164,164 150,162" fill="${c}" display="none"/>`,
-    eye1: (c) => `<polygon id="hm10" points="122,55 126,50 130,55 126,60" fill="${c}" display="none"/>`,
-    mouth: (c) => `<path id="hm11" d="M118 70 L126 66 L130 70 L134 66 L142 70" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round" display="none"/>`,
+  dragon: (svg, c) => {
+    svg.appendChild(svgEl('polygon',{id:'hm0',points:'130,42 148,58 148,72 130,78 112,72 112,58',stroke:c,'stroke-width':2,fill:'rgba(255,111,0,0.12)'}));
+    svg.appendChild(svgEl('line',{id:'hm1',x1:130,y1:78,x2:130,y2:125,stroke:c,'stroke-width':4,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm2',x1:130,y1:88,x2:106,y2:105,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm3',x1:130,y1:88,x2:154,y2:105,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm4',x1:128,y1:125,x2:110,y2:150,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('line',{id:'hm5',x1:132,y1:125,x2:150,y2:150,stroke:c,'stroke-width':3,'stroke-linecap':'round'}));
+    svg.appendChild(svgEl('polygon',{id:'hm6',points:'100,107 94,116 108,113',fill:c}));
+    svg.appendChild(svgEl('polygon',{id:'hm7',points:'160,107 166,116 152,113',fill:c}));
+    svg.appendChild(svgEl('polygon',{id:'hm8',points:'104,152 96,162 114,160',fill:c}));
+    svg.appendChild(svgEl('polygon',{id:'hm9',points:'156,152 164,162 146,160',fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm10',cx:122,cy:58,r:3,fill:c}));
+    svg.appendChild(svgEl('circle',{id:'hm11',cx:138,cy:58,r:3,fill:c}));
   }
 };
 
 // Skin body colour overrides per theme
 const THEME_SKIN_COLORS = {
-  default: '#e74c3c', forest: '#4caf50', dungeon: '#9c6dff',
-  volcano: '#ff6b35', void: '#e040fb', ocean: '#00b4d8',
-  neon: '#ff00ff', gold: '#ffd700', blood: '#ff1744',
-  ice: '#80deea', cosmic: '#c770ff'
+  default:'#e74c3c', forest:'#4caf50', dungeon:'#9c6dff',
+  volcano:'#ff6b35', void:'#e040fb', ocean:'#00b4d8',
+  neon:'#ff00ff', gold:'#ffd700', blood:'#ff1744',
+  ice:'#80deea', cosmic:'#c770ff'
 };
 
 function getSkinColor(){
-  const eq = getEq();
-  const theme = eq.theme || (cfg && cfg.theme) || 'default';
-  return THEME_SKIN_COLORS[theme] || '#e74c3c';
+  const eq=getEq();
+  const theme=eq.theme||(cfg&&cfg.theme)||'default';
+  return THEME_SKIN_COLORS[theme]||'#e74c3c';
 }
 
 function rebuildHangmanSVG(){
-  const eq = getEq();
-  const skinId = eq.skin || 'classic';
-  const skin = SKIN_DEFS[skinId] || SKIN_DEFS.classic;
-  const c = getSkinColor();
-  const svg = document.getElementById('hm-svg');
+  const eq=getEq();
+  const skinId=eq.skin||'classic';
+  const builder=SKIN_BUILDERS[skinId]||SKIN_BUILDERS.classic;
+  const c=getSkinColor();
+  const svg=document.getElementById('hm-svg');
   if(!svg) return;
 
-  // Keep scaffold lines (first 4 children), replace rest
-  const scaffoldColor = skin.scaffoldColor || '#444';
-  // Update scaffold colour
-  Array.from(svg.querySelectorAll('line, circle, rect, ellipse, polygon, path, text')).forEach(el => {
-    if(!el.id || !el.id.startsWith('hm')) {
-      el.setAttribute('stroke', scaffoldColor);
-    }
+  // Update scaffold stroke colour
+  const scaffoldColors={classic:'#555',bones:'#555',robot:'#445',ghost:'#446',dragon:'#543'};
+  const sc=scaffoldColors[skinId]||'#555';
+  Array.from(svg.children).forEach(el=>{
+    if(!el.id||!el.id.startsWith('hm')) el.setAttribute('stroke',sc);
   });
 
-  // Rebuild body parts
-  const parts = ['head','body','lArm','rArm','lLeg','rLeg','lHand','rHand','lFoot','rFoot','eye1','mouth'];
-  // Remove old hm* elements
-  svg.querySelectorAll('[id^="hm"]').forEach(el => el.remove());
+  // Remove all old hm* elements
+  svg.querySelectorAll('[id^="hm"]').forEach(el=>el.remove());
 
-  // Re-insert all parts
-  parts.forEach(part => {
-    if(skin[part]){
-      svg.insertAdjacentHTML('beforeend', skin[part](c));
-    }
-  });
-  // Restore correct display state after rebuild
-  if(typeof wrongCount !== 'undefined' && typeof maxLives !== 'undefined' && maxLives > 0){
+  // Build new skin elements using createElementNS (proper SVG namespace)
+  builder(svg, c);
+
+  // Restore correct display state
+  if(typeof wrongCount!=='undefined'&&typeof maxLives!=='undefined'&&maxLives>0){
     updHM();
   }
 }
@@ -953,7 +949,7 @@ function loadWord(){
     const b=streakBonus(streak+1);document.getElementById('streak-pill').textContent=b>0?'+'+b+'🪙 bonus next win':'';}
   else sb2.style.display='none';
 
-  HMP.forEach(id=>document.getElementById(id).setAttribute('display','none'));
+  HMP.forEach(id=>{const e=document.getElementById(id);if(e)e.setAttribute('display','none');});
   renderLives();renderWord();renderKB();updatePUs();
   if(gameMode!=='timeattack')startTimer();
   if(gameMode==='multiplayer'){mpSolved=false;renderRaceGrid();}
